@@ -1,0 +1,256 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Active on %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actif sur %@"
+          }
+        }
+      }
+    },
+    "Audio capture permission is missing. Allow Studio EQ in System Settings › Privacy & Security › Screen & System Audio Recording.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisation de capture audio manquante. Autorisez Studio EQ dans Réglages Système › Confidentialité et sécurité › Enregistrement de l’écran et de l’audio du système."
+          }
+        }
+      }
+    },
+    "Bass": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graves"
+          }
+        }
+      }
+    },
+    "Checking audio capture permission…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de l’autorisation de capture audio…"
+          }
+        }
+      }
+    },
+    "Equalization": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Égalisation"
+          }
+        }
+      }
+    },
+    "Equalization is off.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Égalisation désactivée."
+          }
+        }
+      }
+    },
+    "Error: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erreur : %@"
+          }
+        }
+      }
+    },
+    "High shelf · 6 kHz": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plateau haut · 6 kHz"
+          }
+        }
+      }
+    },
+    "Inactive: no Studio Display speakers connected.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inactif : aucun Studio Display connecté."
+          }
+        }
+      }
+    },
+    "Inactive: the sound output is %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inactif : la sortie son est « %@ »."
+          }
+        }
+      }
+    },
+    "Low shelf · 150 Hz": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plateau bas · 150 Hz"
+          }
+        }
+      }
+    },
+    "Mids": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Médiums"
+          }
+        }
+      }
+    },
+    "Open Privacy Settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les réglages de confidentialité"
+          }
+        }
+      }
+    },
+    "Open at Login": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir à l’ouverture de session"
+          }
+        }
+      }
+    },
+    "Peak · 1.5 kHz": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloche · 1,5 kHz"
+          }
+        }
+      }
+    },
+    "Preamp": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préampli"
+          }
+        }
+      }
+    },
+    "Quit Studio EQ": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter Studio EQ"
+          }
+        }
+      }
+    },
+    "Reset to Defaults": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeurs par défaut"
+          }
+        }
+      }
+    },
+    "Retry": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Studio EQ": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio EQ"
+          }
+        }
+      }
+    },
+    "Studio EQ active": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio EQ actif"
+          }
+        }
+      }
+    },
+    "Studio EQ error": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erreur de Studio EQ"
+          }
+        }
+      }
+    },
+    "Studio EQ inactive": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio EQ inactif"
+          }
+        }
+      }
+    },
+    "Treble": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aigus"
+          }
+        }
+      }
+    },
+    "another device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "un autre périphérique"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

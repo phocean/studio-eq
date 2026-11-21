@@ -1,0 +1,26 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "CFBundleDisplayName": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio EQ"
+          }
+        }
+      }
+    },
+    "NSAudioCaptureUsageDescription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio EQ capte le son envoyé aux haut-parleurs du Studio Display pour l’égaliser en temps réel. Rien n’est enregistré ni transmis."
+          }
+        }
+      }
+    }
+  }
+}

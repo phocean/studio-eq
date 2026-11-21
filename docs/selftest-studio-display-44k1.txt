@@ -1,0 +1,22 @@
+Output devices:
+  Haut-parleurs Studio Display [uid=AppleUSBAudioEngine:Apple Inc.:Studio Display:<série>:8,9 model=Studio Display Audio Control:05AC:1114 maker=Apple Inc. transport=usb  out=8ch 44100Hz] DEFAULT STUDIO-DISPLAY
+  Haut-parleurs MacBook Pro [uid=BuiltInSpeakerDevice model=Speaker maker=Apple Inc. transport=bltn out=2ch 48000Hz] 
+
+Target: Haut-parleurs Studio Display [uid=AppleUSBAudioEngine:Apple Inc.:Studio Display:<série>:8,9 model=Studio Display Audio Control:05AC:1114 maker=Apple Inc. transport=usb  out=8ch 44100Hz]
+Engine: 44100 Hz, buffer 256 frames, output latency ≈ 28.1 ms
+Settings: bass -6.0, mid +3.0, treble +2.0 dB, preamp -3.01 dB
+  freq Hz   ref dBFS   out dBFS   measured   expected   error
+       40     -38.13     -47.03      -8.90      -8.97    +0.07
+       80     -38.13     -46.57      -8.44      -8.51    +0.07
+      150     -38.13     -44.01      -5.87      -5.94    +0.07
+      300     -38.13     -41.20      -3.07      -3.14    +0.07
+      700     -38.13     -39.82      -1.70      -1.76    +0.06
+     1500     -38.13     -38.06      +0.06      +0.00    +0.06
+     3000     -38.13     -39.57      -1.44      -1.51    +0.06
+     6000     -38.13     -39.73      -1.60      -1.66    +0.06
+    10000     -38.13     -39.12      -0.99      -1.05    +0.06
+    16000     -38.13     -39.06      -0.93      -0.99    +0.07
+Studio EQ process CPU while processing: 0.37 % of one core
+Added latency (original stream → processed stream, measured on the tone onsets): 5.2 ms
+RESULT: PASS (max error 0.07 dB)
+report: <conteneur de l’app>/Data/tmp/StudioEQ-selftest.txt
