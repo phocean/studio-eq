@@ -30,9 +30,7 @@ jobs:
           xcodebuild -version
 
       - name: Unit tests
-        run: |
-          xcodegen generate
-          xcodebuild -project StudioEQ.xcodeproj -scheme StudioEQ -derivedDataPath build/TestData test
+        run: make test
 
       - name: Import the Developer ID certificate into a temporary keychain
         env:
@@ -68,9 +66,7 @@ jobs:
           NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
           NOTARY_ISSUER: ${{ secrets.NOTARY_ISSUER_ID }}
           BUILD_NUMBER: ${{ github.run_number }}
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          VERSION="$VERSION" zsh scripts/release.sh
+        run: make release VERSION="${GITHUB_REF_NAME#v}" BUILD_NUMBER="$BUILD_NUMBER"
 
       - name: Publish the GitHub release
         env:

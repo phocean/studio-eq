@@ -4,8 +4,8 @@ Une version = une étiquette `vX.Y.Z` poussée sur GitHub. Le workflow
 [`release.yml`](../.github/workflows/release.yml) lance alors les tests, construit l'app
 signée **Developer ID**, la vérifie, l'emballe dans un DMG signé, la fait **notariser** par
 Apple, agrafe le ticket, contrôle le DMG avec Gatekeeper et publie la release GitHub
-(DMG + somme SHA-256). Tout est dans [`scripts/release.sh`](../scripts/release.sh), que l'on peut
-aussi lancer sur un Mac.
+(DMG + somme SHA-256). Il appelle `make release`, comme on le ferait sur un Mac ; la logique est
+dans [`scripts/release.sh`](../scripts/release.sh).
 
 ```bash
 git tag v1.0.0 && git push origin v1.0.0
@@ -40,7 +40,7 @@ gh secret set NOTARY_ISSUER_ID
 Le certificat est importé dans un trousseau temporaire du runner, supprimé à la fin, même en cas
 d'échec.
 
-## Vérifications bloquantes de `release.sh`
+## Vérifications bloquantes de `make release`
 
 - signature valide, autorité **Developer ID Application**, **horodatage sécurisé**,
   **Hardened Runtime** ;
@@ -52,13 +52,15 @@ d'échec.
 
 ## Essai local
 
+`VERSION` vaut par défaut celle de `project.yml`, `TEAM_ID` celle de `Config/Local.xcconfig`.
+
 ```bash
-VERSION=1.0.0 TEAM_ID=<équipe> SKIP_NOTARIZATION=1 scripts/release.sh
+make dmg
 ```
 
 Avec notarisation, après `xcrun notarytool store-credentials studio-eq` (identifiants saisis
 par vous) :
 
 ```bash
-VERSION=1.0.0 TEAM_ID=<équipe> NOTARY_PROFILE=studio-eq scripts/release.sh
+make release VERSION=1.0.0 NOTARY_PROFILE=studio-eq
 ```

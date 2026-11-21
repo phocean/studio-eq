@@ -2,3 +2,6 @@
 // Find yours with: security find-identity -v -p codesigning
 DEVELOPMENT_TEAM = ABCDE12345
 CODE_SIGN_IDENTITY = Apple Development
+// Optional: sign Release builds (make install) like the published DMG, so macOS keeps the
+// audio permission when you switch between a local build and a downloaded release.
+// CODE_SIGN_IDENTITY[config=Release] = Developer ID Application

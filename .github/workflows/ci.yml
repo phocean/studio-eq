@@ -21,6 +21,7 @@ jobs:
           brew install xcodegen
           xcodebuild -version
       - name: Unit tests
-        run: |
-          xcodegen generate
-          xcodebuild -project StudioEQ.xcodeproj -scheme StudioEQ -derivedDataPath build/DerivedData test
+        run: make test
+      - name: Test log
+        if: failure()
+        run: tail -100 build/test.log

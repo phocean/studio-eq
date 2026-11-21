@@ -20,7 +20,8 @@ sandbox actif, Hardened Runtime, **aucune dépendance externe**. ≈ 750 lignes 
 | | `SelfTest.swift` | Outils de validation en ligne de commande (auto-test numérique, A/B, sonde permission). Compilé seulement dans les builds de validation. |
 | `StudioEQ/Resources` | `*.xcstrings` | Chaînes : anglais (source) + français. |
 | `StudioEQTests` | | Tests unitaires DSP, temps réel, reconnaissance du Studio Display. |
-| `scripts` | `install.sh`, `scenario.sh`, `audioctl.swift` | Installation ; scénarios de bascule automatisés ; pilote de test (sortie par défaut, fréquence, faux périphérique). |
+| racine | `Makefile` | Point d'entrée unique : génération du projet, build, tests, installation, validation, DMG, publication (`make help`). |
+| `scripts` | `release.sh`, `scenario.sh`, `audioctl.swift` | Publication signée et notarisée (appelée par `make release` / `make dmg`) ; scénarios de bascule automatisés ; pilote de test (sortie par défaut, fréquence, faux périphérique, son de test). |
 
 Séparation demandée : **détection** (`DeviceMonitor`, `OutputDevice`) / **traitement**
 (`TapEngine`, `CaptureCheck`, `DSP/`) / **interface et préférences** (`App/`).
@@ -99,11 +100,11 @@ virtuels qui se déclarent « USB » (eqMac le fait) sont rejetés par le critè
 Ils ne sont compilés que dans les **builds de validation** (condition `VALIDATION`, active en
 Debug) : l'app distribuée ne les contient pas, et elle ignore `-TargetDeviceUID` et
 `-SimulateEngineFailure`. Même en validation, ces deux réglages ne sont lus que sur la ligne de
-commande, jamais dans les préférences enregistrées. Build de validation optimisé :
+commande, jamais dans les préférences enregistrées. `make validation` produit un build optimisé
+qui les contient ; `make selftest` et `make scenario` l'utilisent. À la main :
 
 ```
-xcodebuild -project StudioEQ.xcodeproj -scheme StudioEQ -configuration Release \
-  -derivedDataPath build/Validation SWIFT_ACTIVE_COMPILATION_CONDITIONS=VALIDATION build
+make validation
 V=build/Validation/Build/Products/Release/StudioEQ.app
 open -W -n --stdout out.txt $V --args --list-devices
 open -W -n --stdout out.txt $V --args --selftest [--device <uid>]

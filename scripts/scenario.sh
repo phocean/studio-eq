@@ -3,10 +3,9 @@
 # Copyright © 2026 Jean-Christophe Baptiste
 # Automated switching scenarios against the running app, using a temporary aggregate device
 # as a stand-in for a second output / for the Studio Display being plugged and unplugged.
-# Usage: scripts/scenario.sh <path/to/StudioEQ.app> <test-audio-file>
-# The app must be a validation build (Debug, or Release with SWIFT_ACTIVE_COMPILATION_CONDITIONS=
-# VALIDATION): only those honour -TargetDeviceUID. Build the helper first:
-#   swiftc -O scripts/audioctl.swift -o build/audioctl
+# Run it with `make scenario`, which builds the validation app (the only one that honours
+# -TargetDeviceUID), the audioctl helper and a test tone, then calls:
+#   scripts/scenario.sh <path/to/StudioEQ.app> <test-audio-file>
 set -u
 APP=$1; AUDIO=$2; CTL=build/audioctl; FAKE=test.fake.output
 [[ -x $CTL ]] || { echo "missing $CTL (see header)" >&2; exit 1; }

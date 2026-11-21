@@ -10,7 +10,7 @@ mesure ou journaux · **HUMAIN** = vérifié à l'oreille ou à l'écran par l'u
 
 ## 1. Tests unitaires — AUTO (18/18 réussis)
 
-`xcodebuild -scheme StudioEQ test` ou ⌘U.
+`make test` ou ⌘U.
 
 | Suite | Vérifie |
 |---|---|
@@ -91,8 +91,8 @@ Trois revues indépendantes (Claude, Codex, Grok) : rapports et synthèse dans
 | Vérification | Méthode | Résultat |
 |---|---|---|
 | Tests unitaires | AUTO | 18/18 (5 nouveaux : sens des curseurs, 8 canaux, limiteur, transparence du limiteur, NaN). |
-| Chaîne complète sur le Studio Display, 48 kHz | MACHINE (`--selftest`, build de validation optimisé) | **Réussi** deux fois ; 4,2 ms ajoutées ; 0,39 % d'un cœur. Écart de forme 0,00–0,02 dB de 700 Hz à 16 kHz ; 0,3–0,4 dB, de signe variable, de 40 à 300 Hz, parce que l'utilisateur écoutait de la musique pendant la mesure (elle est captée avec les sons de test). Les rapports de référence ci-dessus restent valables : avec les réglages par défaut et un niveau normal, le traitement est mathématiquement identique. |
-| Bascules (`scenario.sh`) avec vérification d'autorisation à chaque montage | AUTO | 10/10. |
+| Chaîne complète sur le Studio Display, 48 kHz | MACHINE (`make selftest`, build de validation optimisé) | **Réussi** trois fois. Sans autre son en cours : écart de forme **0,01 dB**, décalage global +0,10 dB. Deux essais précédents ; 4,2 ms ajoutées ; 0,39 % d'un cœur. Écart de forme 0,00–0,02 dB de 700 Hz à 16 kHz ; 0,3–0,4 dB, de signe variable, de 40 à 300 Hz, parce que l'utilisateur écoutait de la musique pendant la mesure (elle est captée avec les sons de test). Les rapports de référence ci-dessus restent valables : avec les réglages par défaut et un niveau normal, le traitement est mathématiquement identique. |
+| Bascules (`make scenario`) avec vérification d'autorisation à chaque montage | AUTO | 10/10. |
 | Échec de démarrage simulé | MACHINE | Une seule tentative, état « Erreur ». |
 | Deuxième instance lancée pendant que l'app tourne | MACHINE | Elle se ferme aussitôt ; l'app installée reste seule et active. |
 | Build distribué sans outils de test | MACHINE | Aucune trace de `--selftest`, `-TargetDeviceUID` ni `afplay` dans le binaire Release. |

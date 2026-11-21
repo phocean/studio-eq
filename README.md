@@ -33,13 +33,14 @@ Documentation : [faisabilité et choix du moteur](docs/FAISABILITE.md) ·
 ## Compiler depuis les sources
 
 ```bash
-scripts/install.sh
+make install
 ```
 
-Le script génère le projet, compile en Release, vérifie la signature, copie l'app dans
-`dist/` et dans `/Applications`, puis la lance ; il s'arrête sans rien installer si la
-compilation échoue. Pour travailler dans Xcode : `xcodegen generate`, puis ouvrez
-`StudioEQ.xcodeproj` (schéma `StudioEQ`, ⌘U pour les tests).
+`make install` génère le projet, compile en Release, vérifie la signature, copie l'app dans
+`dist/` et dans `/Applications`, puis la lance ; rien n'est installé si la compilation
+échoue. `make help` liste les autres cibles : `build`, `test`, `validation`, `selftest`,
+`scenario`, `dmg`, `release`, `clean`. Pour travailler dans Xcode : `make project`, puis
+ouvrez `StudioEQ.xcodeproj` (schéma `StudioEQ`, ⌘U pour les tests).
 
 Signature : par défaut **ad hoc**, sans compte développeur. Pour signer avec votre identité,
 copiez `Config/Local.xcconfig.example` en `Config/Local.xcconfig` (ignoré par git) et

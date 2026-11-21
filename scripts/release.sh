@@ -4,7 +4,8 @@
 #
 # Builds the distributable Studio EQ: Release build signed with Developer ID (Hardened Runtime,
 # secure timestamp, no debugger entitlement), checked, packaged as a DMG, notarized and stapled.
-# Used by .github/workflows/release.yml; runs the same way on a Mac.
+# Run it through make (`make release`, or `make dmg` for a trial without notarization), on a Mac
+# or in .github/workflows/release.yml.
 #
 # Environment:
 #   VERSION            version shown to users, e.g. 1.2.0 (required)
