@@ -71,6 +71,16 @@
         }
       }
     },
+    "Hide Icon Without Studio Display": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer l’icône sans Studio Display"
+          }
+        }
+      }
+    },
     "High shelf · 6 kHz": {
       "localizations": {
         "fr": {
@@ -227,6 +237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Studio EQ inactif"
+          }
+        }
+      }
+    },
+    "To show it again, open Studio EQ again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour la retrouver, ouvrez à nouveau Studio EQ."
           }
         }
       }

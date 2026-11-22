@@ -70,7 +70,12 @@ from previously opened versions").
 ## Menu
 
 Status (active, inactive and why, error) · Equalization switch · Bass / Mids / Treble (±12 dB,
-0.5 dB steps) · fixed preamp shown (−3 dB) · Reset to Defaults · Open at Login · Quit (⌘Q).
+0.5 dB steps) · fixed preamp shown (−3 dB) · Reset to Defaults · Open at Login · Hide Icon
+Without Studio Display · Quit (⌘Q).
+
+With "Hide Icon Without Studio Display", the menu bar icon disappears while the display is
+unplugged, since there is nothing to adjust then, and comes back when it is plugged in. To show
+it in the meantime, open Studio EQ again (Finder, Spotlight).
 
 Each slider only changes its own band: the preamp is fixed and does not compensate for the
 settings. A peak limiter on the output prevents any clipping, even with strong boosts.

@@ -35,6 +35,15 @@ struct MenuContent: View {
             if let error = model.launchAtLoginError {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
+            VStack(alignment: .leading, spacing: 2) {
+                Toggle("Hide Icon Without Studio Display", isOn: $model.hideIconWithoutDisplay)
+                if model.hideIconWithoutDisplay {
+                    Text("To show it again, open Studio EQ again.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
             Divider()
             Button("Quit Studio EQ") { model.shutdown(); NSApp.terminate(nil) }
                 .keyboardShortcut("q")

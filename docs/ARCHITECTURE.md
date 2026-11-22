@@ -111,6 +111,7 @@ virtuels qui se déclarent « USB » (eqMac le fait) sont rejetés par le critè
 | Données | réglages dans `UserDefaults` (conteneur sandbox) | Aucun son enregistré, rien transmis, pas de télémétrie, pas de compte. |
 | Privilèges | aucun droit admin, aucun pilote, aucun processus auxiliaire | |
 | Lancement à l'ouverture de session | `SMAppService.mainApp` | API standard, visible et révocable dans Réglages Système › Général › Ouverture. |
+| Icône masquée sans écran (option) | `MenuBarExtra(isInserted:)` ; réouverture (`applicationShouldHandleReopen`) ou notification distribuée `com.jcbaptiste.StudioEQ.revealIcon`, sans contenu, envoyée par une seconde copie avant de quitter | N'importe quel processus peut envoyer cette notification : elle ne fait qu'afficher l'icône. |
 
 ## Outils de validation (sans interface)
 

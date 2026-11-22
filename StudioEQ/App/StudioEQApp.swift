@@ -14,7 +14,8 @@ struct StudioEQApp: App {
     private var model: AppModel? { AppInstance.model }
 
     var body: some Scene {
-        MenuBarExtra(isInserted: .constant(model != nil)) {
+        // Read-only binding: the icon's presence follows the model, never a ⌘-drag out of the bar.
+        MenuBarExtra(isInserted: Binding(get: { model?.isIconVisible ?? false }, set: { _ in })) {
             if let model { MenuContent(model: model) }
         } label: {
             MenuBarIcon(status: model?.status ?? .disabled)
@@ -62,11 +63,16 @@ enum AppInstance {
         return false
     }
 
+    /// Posted by a copy that quits because another one runs: the running copy shows its icon.
+    nonisolated static let revealIconNotification = Notification.Name("com.jcbaptiste.StudioEQ.revealIcon")
+
     static let model: AppModel? = {
         if isCommandLineMode || isTesting { return nil }
         guard acquireInstanceLock() else {
             // Hand over to the running copy and leave without touching the audio.
             log.info("another instance is running: quitting")
+            DistributedNotificationCenter.default().postNotificationName(
+                revealIconNotification, object: nil, userInfo: nil, deliverImmediately: true)
             DispatchQueue.main.async { NSApp.terminate(nil) }
             return nil
         }
@@ -75,14 +81,43 @@ enum AppInstance {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Opening the running app again (Finder, Spotlight, Launchpad) shows a hidden icon.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainActor.assumeIsolated { AppInstance.model?.revealIcon() }
+        return true
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         #if VALIDATION
         if AppInstance.isCommandLineMode {
             MainActor.assumeIsolated { _ = SelfTest.runIfRequested() }
+        } else {
+            MenuBarIconProbe.start()
         }
         #endif
     }
 }
+
+#if VALIDATION
+/// Validation builds: logs the number of menu bar item windows of this app whenever it changes,
+/// so a script can check that the icon appears and disappears (other processes cannot see them).
+@MainActor
+enum MenuBarIconProbe {
+    private static var last = -1
+
+    static func start() {
+        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+            MainActor.assumeIsolated {
+                // A removed item keeps a zero-height window; a shown one has one per menu bar.
+                let n = NSApp.windows.filter {
+                    String(describing: type(of: $0)).contains("StatusBarWindow") && $0.isVisible && $0.frame.height > 0
+                }.count
+                if n != last { last = n; log.info("menu bar icon windows: \(n, privacy: .public)") }
+            }
+        }
+    }
+}
+#endif
 
 struct MenuBarIcon: View {
     let status: AppModel.Status

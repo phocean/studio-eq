@@ -46,6 +46,26 @@ final class AppModel {
         }
     }
 
+    /// Option: no menu bar icon while no Studio Display speakers are connected (there is nothing
+    /// to adjust then). Opening Studio EQ again shows it (`revealIcon`).
+    var hideIconWithoutDisplay: Bool {
+        didSet {
+            guard hideIconWithoutDisplay != oldValue else { return }
+            Preferences.hideIconWithoutDisplay = hideIconWithoutDisplay
+            // Turned on from the menu while the display is absent: do not pull the icon (and the
+            // open menu) away under the pointer. It goes the next time the display leaves.
+            if hideIconWithoutDisplay, displaySpeakers == nil { iconRevealed = true }
+        }
+    }
+
+    /// The user opened Studio EQ again while its icon was hidden: show it until the display
+    /// next connects (then the usual rule applies again).
+    private(set) var iconRevealed = false
+
+    var isIconVisible: Bool { !hideIconWithoutDisplay || displaySpeakers != nil || iconRevealed }
+
+    func revealIcon() { iconRevealed = true }
+
     var launchAtLogin: Bool {
         get { SMAppService.mainApp.status == .enabled }
         set {
@@ -92,6 +112,7 @@ final class AppModel {
         let s = Preferences.settings
         settings = s
         isEnabled = Preferences.isEnabled
+        hideIconWithoutDisplay = Preferences.hideIconWithoutDisplay
         parameters = EQParameters(s)
         monitor.onChange = { [weak self] in self?.reconcile() }
         monitor.start()
@@ -114,6 +135,13 @@ final class AppModel {
                 self.rearm()
                 self.reconcile()
             }
+        })
+        // A second copy (from the DMG, `open -n`) quits at once because of the instance lock, but
+        // asks this one to show its icon first. No payload: any process may post it, and all it
+        // can do is show the icon.
+        observers.append(DistributedNotificationCenter.default().addObserver(
+            forName: AppInstance.revealIconNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.revealIcon() }
         })
         // Fast user switching: the engine runs only while this session is the active one, like
         // sleep. The instance lock (AppInstance) is per user and cannot see other users' copies.
@@ -189,6 +217,7 @@ final class AppModel {
         let defaultID = try? HAL.defaultOutputDevice()
         currentOutput = devices.first { $0.id == defaultID }
         displaySpeakers = devices.first(where: isTarget)
+        if displaySpeakers != nil { iconRevealed = false }
         monitor.watch(device: currentOutput?.id)
 
         guard !isAsleep, !isSessionInactive else { cancelCheck(); stopEngine(); return }
@@ -323,6 +352,11 @@ enum Preferences {
     static var isEnabled: Bool {
         get { store.object(forKey: "Enabled") as? Bool ?? true }
         set { store.set(newValue, forKey: "Enabled") }
+    }
+
+    static var hideIconWithoutDisplay: Bool {
+        get { store.bool(forKey: "HideIconWithoutDisplay") }
+        set { store.set(newValue, forKey: "HideIconWithoutDisplay") }
     }
 
     #if VALIDATION

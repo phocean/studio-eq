@@ -103,6 +103,7 @@ Trois revues indépendantes (Claude, Codex, Grok) : rapports et synthèse dans
 | Test | Comment |
 |---|---|
 | Changement rapide d'utilisateur, Studio EQ ouvert dans les deux sessions | Journaux : moteur arrêté quand la session passe en arrière-plan, remonté au retour ; le son de l'autre session n'est ni coupé ni doublé. |
+| Cocher « Masquer l'icône sans Studio Display », débrancher puis rebrancher l'écran | L'icône disparaît au débranchement, revient au branchement ; ouvrir Studio EQ depuis le Finder la fait revenir entre-temps. |
 | Écouter une basse forte avec les graves à +6 dB (limiteur au travail) | Plus de grain ni de saturation dans les graves (correction du limiteur, 1.0.1). |
 | Débrancher / rebrancher le câble du Studio Display en cours de lecture | Vérifier « Aucun Studio Display connecté » puis « Actif » au retour, sans clic. Journaux : `/usr/bin/log show --last 5m --info --predicate 'subsystem == "com.jcbaptiste.StudioEQ"'` (chemin complet : sous zsh, `log` seul est une commande intégrée). |
 | Basculer vers des AirPods et revenir | État « Inactif : la sortie son est … », son des AirPods non traité. |
@@ -127,4 +128,22 @@ Corrections de la version 1.0.1 :
 | Deuxième copie lancée pendant que l'app tourne | MACHINE + journaux | Elle quitte (« another instance is running ») ; la première reste active. |
 | Échec de montage simulé (`-SimulateEngineFailure YES`, build de validation) | MACHINE + journaux | Échec, « automatic retry after a failure » 3 s plus tard avec nouvelle vérification, second échec, puis plus aucune tentative. Son jamais coupé. |
 | **Deux copies lancées au même instant** (`open -n` ×2) | MACHINE + journaux | Une seule quitte, l'autre monte le moteur et passe « active » sur le Studio Display. |
+
+## 10. Option « Masquer l'icône sans Studio Display » (22 novembre 2026)
+
+MACHINE, build de validation. L'option est passée sur la ligne de commande
+(`-HideIconWithoutDisplay YES`), l'absence d'écran simulée par `-TargetDeviceUID none`. Les
+icônes de la barre des menus ne sont pas visibles des autres processus : le build de validation
+journalise le nombre de ses fenêtres d'icône (« menu bar icon windows », une par barre des
+menus, 5 sur ce Mac).
+
+| Cas | Résultat |
+|---|---|
+| Option active, pas d'écran | 0 fenêtre : icône masquée. |
+| Puis Studio EQ rouvert (`open`) | 5 : icône affichée. |
+| Option active, pas d'écran, puis seconde copie (`open -n`) | La copie quitte ; 0 → 5 : icône affichée. |
+| Option active, écran branché | 5. |
+| Option inactive, pas d'écran | 5. |
+
+Reste à faire (§8) : débrancher puis rebrancher le vrai écran avec l'option cochée dans le menu.
 

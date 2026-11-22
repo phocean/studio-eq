@@ -73,7 +73,11 @@ précédemment ouvertes »).
 
 État (actif, inactif et pourquoi, erreur) · interrupteur Égalisation · Graves / Médiums / Aigus
 (±12 dB, pas de 0,5 dB) · préampli fixe affiché (−3 dB) · Valeurs par défaut · Ouvrir à
-l'ouverture de session · Quitter (⌘Q).
+l'ouverture de session · Masquer l'icône sans Studio Display · Quitter (⌘Q).
+
+Avec « Masquer l'icône sans Studio Display », l'icône quitte la barre des menus tant que l'écran
+est débranché, puisqu'il n'y a alors rien à régler, et revient quand il est rebranché. Pour la
+retrouver entre-temps, ouvrir à nouveau Studio EQ (Finder, Spotlight).
 
 Chaque curseur ne modifie que sa bande : le préampli est fixe, il ne compense pas les
 réglages. Un limiteur de crête en sortie empêche toute saturation, même avec de fortes
