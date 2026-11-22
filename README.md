@@ -119,6 +119,6 @@ tccutil reset AudioCapture com.jcbaptiste.StudioEQ
 Copyright © 2026 Jean-Christophe Baptiste.
 
 Studio EQ is free software: you can redistribute it and/or modify it under the terms of the
-**GNU General Public License, version 2 or (at your option) any later version**, as published by
+**GNU General Public License, version 3 or (at your option) any later version**, as published by
 the Free Software Foundation. It is distributed without any warranty. Full text:
-[LICENSE](LICENSE). SPDX identifier: `GPL-2.0-or-later`.
+[LICENSE](LICENSE). SPDX identifier: `GPL-3.0-or-later`.

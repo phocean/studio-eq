@@ -1,5 +1,5 @@
 #!/bin/zsh
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Jean-Christophe Baptiste
 # Automated switching scenarios against the running app, using a temporary aggregate device
 # as a stand-in for a second output / for the Studio Display being plugged and unplugged.

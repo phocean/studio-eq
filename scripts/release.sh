@@ -1,5 +1,5 @@
 #!/bin/zsh
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright © 2026 Jean-Christophe Baptiste
 #
 # Builds the distributable Studio EQ: Release build signed with Developer ID (Hardened Runtime,

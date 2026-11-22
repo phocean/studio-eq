@@ -33,7 +33,7 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
         NSAudioCaptureUsageDescription: "Studio EQ captures the audio sent to the Studio Display speakers to equalize it in real time. Nothing is recorded or transmitted."
-        NSHumanReadableCopyright: "© 2026 Jean-Christophe Baptiste. Licensed under the GNU GPL v2 or later."
+        NSHumanReadableCopyright: "© 2026 Jean-Christophe Baptiste. Licensed under the GNU GPL v3 or later."
     entitlements:
       path: StudioEQ/StudioEQ.entitlements
       properties:

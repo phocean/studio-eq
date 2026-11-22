@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Default signing: ad hoc ("-"), so anyone can build and run Studio EQ without an Apple
 // developer account (macOS then asks for the audio capture permission again after each build).

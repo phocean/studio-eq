@@ -27,6 +27,6 @@
 	<key>NSAudioCaptureUsageDescription</key>
 	<string>Studio EQ captures the audio sent to the Studio Display speakers to equalize it in real time. Nothing is recorded or transmitted.</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>© 2026 Jean-Christophe Baptiste. Licensed under the GNU GPL v2 or later.</string>
+	<string>© 2026 Jean-Christophe Baptiste. Licensed under the GNU GPL v3 or later.</string>
 </dict>
 </plist>
