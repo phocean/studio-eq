@@ -1,87 +1,84 @@
 # Studio EQ
 
-Petite app de barre des menus pour macOS qui égalise automatiquement le son **uniquement quand
-les haut-parleurs d'un Apple Studio Display sont la sortie audio du système**. Elle n'utilise
-aucun pilote audio virtuel, aucun réseau et aucune dépendance externe.
+**English** · [Français](README.fr.md)
+
+A small macOS menu bar app that automatically equalizes the sound **only while the speakers of
+an Apple Studio Display are the system audio output**. It uses no virtual audio driver, no
+network and no third-party dependency.
 
 <p align="center">
-  <img src="docs/images/menu.png" width="300"
-       alt="Menu de Studio EQ : état actif sur les haut-parleurs Studio Display, interrupteur d'égalisation, curseurs graves, médiums et aigus, préampli −3 dB, bouton Valeurs par défaut, option d'ouverture à la session.">
+  <img src="docs/images/menu.png" width="322"
+       alt="Studio EQ menu: active on the Studio Display speakers, Equalization switch, Bass, Mids and Treble sliders, −3 dB preamp, Reset to Defaults button, Open at Login option.">
 </p>
 
-- Studio Display sélectionné → égalisation active.
-- AirPods, haut-parleurs du Mac, autre sortie, écran débranché → égalisation inactive, son intact.
-- Bascule automatique à chaque changement, reprise au branchement, au réveil et à l'ouverture de
-  session (option).
-- Réglages par défaut : graves −6 dB, médiums +3 dB, aigus +2 dB. Ils sont modifiables et
-  conservés d'une session à l'autre.
+- Studio Display selected → equalization on.
+- AirPods, Mac speakers, any other output, display unplugged → equalization off, sound untouched.
+- Switches automatically on every change, and resumes when the display is plugged in, after
+  sleep and at login (optional).
+- Default settings: bass −6 dB, mids +3 dB, treble +2 dB. They can be changed and are kept
+  across sessions.
 
-## Installer
+## Install
 
-Téléchargez le DMG de la dernière version dans les
-[Releases](https://github.com/phocean/studio-eq/releases), ouvrez-le et glissez Studio EQ dans
-Applications. L'app est signée Developer ID et notarisée par Apple.
+Download the DMG of the latest version from
+[Releases](https://github.com/phocean/studio-eq/releases), open it and drag Studio EQ to
+Applications. The app is signed with Developer ID and notarized by Apple.
 
-Documentation : [faisabilité et choix du moteur](docs/FAISABILITE.md) ·
-[architecture](docs/ARCHITECTURE.md) · [paramètres DSP](docs/DSP.md) ·
-[compte rendu de tests](docs/TESTS.md) · [revues de code](docs/revues/SYNTHESE.md) ·
-[publier une version](docs/RELEASE.md) · [limitations](#limitations).
+Documentation (in French): [feasibility and engine choice](docs/FAISABILITE.md) ·
+[architecture](docs/ARCHITECTURE.md) · [DSP parameters](docs/DSP.md) ·
+[test report](docs/TESTS.md) · [code reviews](docs/revues/SYNTHESE.md) ·
+[publishing a release](docs/RELEASE.md) · [limitations](#limitations).
 
-## Prérequis
+## Requirements
 
-- Mac Apple Silicon, **macOS 15 ou plus récent** (les process taps exigent macOS 14.2 ; 15
-  est requis pour `Synchronization.Atomic`). Validé sur macOS 27.3.
-- Pour compiler : Xcode 26 ou plus récent (validé avec Xcode 26.6 en CI et 27.2 en local) et
-  [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) : le projet Xcode
-  est généré à partir de `project.yml` et n'est pas versionné.
+- Apple Silicon Mac, **macOS 15 or later** (process taps need macOS 14.2; 15 is required for
+  `Synchronization.Atomic`). Validated on macOS 27.3.
+- To build: Xcode 26 or later (validated with Xcode 26.6 in CI and 27.2 locally) and
+  [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`): the Xcode project
+  is generated from `project.yml` and is not versioned.
 
-## Compiler depuis les sources
+## Build from source
 
 ```bash
 make install
 ```
 
-`make install` génère le projet, compile en Release, vérifie la signature, copie l'app dans
-`dist/` et dans `/Applications`, puis la lance ; rien n'est installé si la compilation
-échoue. `make help` liste les autres cibles : `build`, `test`, `validation`, `selftest`,
-`scenario`, `dmg`, `release`, `publish`, `clean`. Pour travailler dans Xcode : `make project`, puis
-ouvrez `StudioEQ.xcodeproj` (schéma `StudioEQ`, ⌘U pour les tests).
+`make install` generates the project, builds Release, checks the signature, copies the app to
+`dist/` and `/Applications`, then launches it; nothing is installed if the build fails.
+`make help` lists the other targets: `build`, `test`, `validation`, `selftest`, `scenario`,
+`dmg`, `release`, `publish`, `clean`. To work in Xcode: `make project`, then open
+`StudioEQ.xcodeproj` (scheme `StudioEQ`, ⌘U for tests).
 
-Signature : par défaut **ad hoc**, sans compte développeur. Pour signer avec votre identité,
-copiez `Config/Local.xcconfig.example` en `Config/Local.xcconfig` (ignoré par git) et
-renseignez-le. macOS rattache l'autorisation audio à la signature : une app signée autrement
-(ou, en ad hoc, chaque nouvelle compilation) redemande l'autorisation.
-Si une version signée différemment a déjà tourné sur le Mac, macOS demande aussi, au premier
-lancement, d'autoriser l'accès aux réglages qu'elle a laissés (« diffère des versions
-précédemment ouvertes »).
+Signing: **ad hoc** by default, no developer account needed. To sign with your own identity,
+copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` (ignored by git) and fill it
+in. macOS ties the audio permission to the signature: an app signed differently (or, ad hoc,
+every new build) asks for the permission again. If a differently signed copy already ran on the
+Mac, macOS also asks on first launch to allow access to the settings it left behind ("differs
+from previously opened versions").
 
-## Premier lancement
+## First launch
 
-1. L'icône (cadran) apparaît dans la barre des menus.
-2. Quand le Studio Display devient la sortie, macOS demande l'autorisation d'**enregistrer
-   l'audio du système**. Elle est indispensable pour relire le son destiné à l'écran. Rien n'est
-   enregistré ni transmis.
-3. Si l'autorisation est refusée, Studio EQ **ne coupe rien** : le son reste normal et le menu
-   l'indique, avec un bouton vers Réglages Système › Confidentialité et sécurité ›
-   Enregistrement de l'écran et de l'audio du système. Une fois l'autorisation accordée, cliquez
-   « Réessayer ».
-4. Cochez « Ouvrir à l'ouverture de session » si vous le souhaitez.
+1. The icon (a dial) appears in the menu bar.
+2. When the Studio Display becomes the output, macOS asks for permission to **record system
+   audio**. It is required to process the sound headed to the display. Nothing is recorded or
+   sent anywhere.
+3. If the permission is denied, Studio EQ **mutes nothing**: the sound stays normal and the
+   menu says so, with a button to System Settings › Privacy & Security › Screen & System Audio
+   Recording. Once the permission is granted, click "Retry".
+4. Check "Open at Login" if you wish.
 
 ## Menu
 
-État (actif, inactif et pourquoi, erreur) · interrupteur Égalisation · Graves / Médiums / Aigus
-(±12 dB, pas de 0,5 dB) · préampli fixe affiché (−3 dB) · Valeurs par défaut · Ouvrir à
-l'ouverture de session · Quitter (⌘Q).
+Status (active, inactive and why, error) · Equalization switch · Bass / Mids / Treble (±12 dB,
+0.5 dB steps) · fixed preamp shown (−3 dB) · Reset to Defaults · Open at Login · Quit (⌘Q).
 
-Chaque curseur ne modifie que sa bande : le préampli est fixe, il ne compense pas les
-réglages. Un limiteur de crête en sortie empêche toute saturation, même avec de fortes
-accentuations.
+Each slider only changes its own band: the preamp is fixed and does not compensate for the
+settings. A peak limiter on the output prevents any clipping, even with strong boosts.
 
-## Désinstaller
+## Uninstall
 
-Quittez l'app, décochez l'ouverture de session si besoin, puis supprimez
-`/Applications/StudioEQ.app` et éventuellement `~/Library/Containers/com.jcbaptiste.StudioEQ`.
-Pour remettre l'autorisation à zéro :
+Quit the app, uncheck Open at Login if needed, then delete `/Applications/StudioEQ.app` and
+optionally `~/Library/Containers/com.jcbaptiste.StudioEQ`. To reset the permission:
 
 ```bash
 tccutil reset AudioCapture com.jcbaptiste.StudioEQ
@@ -89,33 +86,32 @@ tccutil reset AudioCapture com.jcbaptiste.StudioEQ
 
 ## Limitations
 
-- **Autorisation retirée pendant l'égalisation** (Réglages Système) : le son continue (vérifié).
-  L'autorisation est revérifiée avant **chaque** montage du moteur (changement de sortie, de
-  fréquence, réveil, interrupteur) : un refus y est détecté sans couper le son.
-- **Latence ajoutée mesurée : 4,2 ms** à 48 kHz. Les lecteurs vidéo ne la compensent pas, car
-  ils ne la connaissent pas ; elle reste très en dessous du seuil de perception de la
-  synchronisation labiale (≈ 45 ms).
-- À chaque montage du moteur (passage vers le Studio Display, changement de fréquence, réveil),
-  0,2 à 0,6 s de son passent non traitées : c'est le temps de la vérification de l'autorisation,
-  faite avant de couper quoi que ce soit. Après une lecture, l'E/S reste active : ≈ 0,3 % d'un cœur.
-- Le son d'**une app qui choisit elle-même le Studio Display** alors que la sortie système est
-  ailleurs n'est pas égalisé : c'est voulu, seule la sortie système déclenche l'égalisation.
-- Les sons d'alerte suivent la « sortie des effets sonores » de macOS. S'ils vont vers l'écran
-  pendant que l'égalisation est active, ils sont égalisés eux aussi.
-- La reconnaissance du Studio Display repose sur les identifiants USB relevés sur un exemplaire
-  (`Studio Display Audio Control:05AC:1114`). Un futur modèle avec un autre nom de produit USB
-  ne serait pas reconnu sans mise à jour.
-- Une seule instance tourne à la fois : une seconde copie lancée (depuis le DMG par exemple)
-  se ferme aussitôt sans toucher au son.
-- Avec de fortes accentuations (au-delà de +3 dB au total) sur une musique déjà au maximum, le
-  limiteur de sortie travaille : pas de saturation, mais une légère compression des crêtes.
-- Les tests matériels encore à faire sont listés dans [TESTS.md](docs/TESTS.md).
+- **Permission revoked while equalizing** (System Settings): the sound keeps playing (verified).
+  The permission is checked again before **every** engine start (output change, sample rate
+  change, wake, switch), so a denial is caught there without muting the sound.
+- **Measured added latency: 4.2 ms** at 48 kHz. Video players do not compensate for it, since
+  they do not know about it; it stays far below the lip-sync perception threshold (≈ 45 ms).
+- Each time the engine starts (switching to the Studio Display, sample rate change, wake),
+  0.2 to 0.6 s of sound plays unprocessed: that is the time taken by the permission check, done
+  before muting anything. After playback, I/O stays active: ≈ 0.3% of one core.
+- Sound from **an app that picks the Studio Display itself** while the system output is
+  elsewhere is not equalized: this is intended, only the system output triggers equalization.
+- Alert sounds follow macOS's "Play sound effects through" output. If they go to the display
+  while equalization is on, they are equalized too.
+- The Studio Display is recognized by the USB identifiers read on one unit
+  (`Studio Display Audio Control:05AC:1114`). A future model with a different USB product name
+  would not be recognized without an update.
+- Only one instance runs at a time: a second copy (launched from the DMG, for instance) quits
+  immediately without touching the sound.
+- With strong boosts (more than +3 dB in total) on music already at full scale, the output
+  limiter works: no clipping, but slight peak compression.
+- Hardware tests still to be done are listed in [TESTS.md](docs/TESTS.md).
 
-## Licence
+## License
 
 Copyright © 2026 Jean-Christophe Baptiste.
 
-Studio EQ est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes de
-la **GNU General Public License, version 2 ou (à votre choix) toute version ultérieure**, telle
-que publiée par la Free Software Foundation. Il est distribué sans aucune garantie. Texte
-complet : [LICENSE](LICENSE). Identifiant SPDX : `GPL-2.0-or-later`.
+Studio EQ is free software: you can redistribute it and/or modify it under the terms of the
+**GNU General Public License, version 2 or (at your option) any later version**, as published by
+the Free Software Foundation. It is distributed without any warranty. Full text:
+[LICENSE](LICENSE). SPDX identifier: `GPL-2.0-or-later`.
