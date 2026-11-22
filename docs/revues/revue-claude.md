@@ -80,7 +80,7 @@ Il faut corriger les points 1 à 6 avant la publication. Le reste peut suivre.
   - `.gitignore`.
 - **Constat et preuve** :
   - Les rapports d'auto-test contiennent le **numéro de série de l'écran de l'auteur** (`…Studio Display:<série>:8,9`), le chemin `~/Library/Containers/…` et l'inventaire des pilotes audio installés (eqMac, Microsoft Teams Audio).
-  - L'identifiant d'équipe `26N2RN6N67` est en dur à trois endroits. Ce n'est pas un secret, puisqu'il figure dans toute signature, mais c'est un identifiant personnel, et il casse le build de quiconque fait un fork.
+  - L'identifiant d'équipe `<équipe>` est en dur à trois endroits. Ce n'est pas un secret, puisqu'il figure dans toute signature, mais c'est un identifiant personnel, et il casse le build de quiconque fait un fork.
   - `MatcherTests` contient un autre numéro de série, présenté comme tiré d'un rapport public (**à vérifier**).
   - `StudioEQ.xcodeproj`, qui est un fichier généré, n'est pas ignoré.
   - Il n'y a aucun fichier `LICENSE`/`COPYING`, aucun en-tête SPDX, et `NSHumanReadableCopyright` est vide.

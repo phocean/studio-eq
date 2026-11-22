@@ -8,15 +8,15 @@ Légende : **AUTO** = test automatisé rejouable · **MACHINE** = vérifié sur 
 mesure ou journaux · **HUMAIN** = vérifié à l'oreille ou à l'écran par l'utilisateur ·
 **À FAIRE** = non exécuté.
 
-## 1. Tests unitaires — AUTO (18/18 réussis)
+## 1. Tests unitaires — AUTO (21/21 réussis)
 
 `make test` ou ⌘U.
 
 | Suite | Vérifie |
 |---|---|
 | `EQDesignTests` | Gains atteints (plateaux, mi-gain, centre de cloche) de −12 à +12 dB ; stabilité des filtres (pôles dans le cercle unité) sur toute la plage et à 44,1–192 kHz ; préampli fixe −3 dB : courbe par défaut ≤ 0 dB partout ; **sens des curseurs** : chacun rend sa bande plus forte quand il monte, de −12 à +12 dB, et ne déplace pas le reste du spectre de plus de 0,6 dB ; bornage et sérialisation des réglages ; réglages à plat = filtres identité. |
-| `EQProcessorTests` | Sinus traité = réponse théorique (±0,05 dB) ; saut de 12 dB demandé → aucune discontinuité (glissement) et cible atteinte ; silence → sortie exactement nulle, aucune valeur non finie ; entrée entrelacée → sortie non entrelacée correcte ; **flux 8 canaux** : chaque canal ressort sur le même canal ; **limiteur** : carrés pleine échelle (50, 100, 1 000 Hz, quatre réglages extrêmes) jamais au-dessus de −0,2 dBFS, sinus à 0,9 inchangé ; **NaN/Inf** injectés : sortie toujours finie, canal revenu au niveau attendu. |
-| `MatcherTests` | Studio Display reconnu (y compris nom traduit, autre format d'UID, fabricant absent) ; rejetés : haut-parleurs du Mac, AirPods, pilote virtuel « USB » (eqMac), micro de l'écran, adaptateur USB-C Apple, écran LG, appareil AirPlay nommé « Studio Display », agrégat. |
+| `EQProcessorTests` | Sinus traité = réponse théorique (±0,05 dB) ; saut de 12 dB demandé → aucune discontinuité (glissement) et cible atteinte ; silence → sortie exactement nulle, aucune valeur non finie ; entrée entrelacée → sortie non entrelacée correcte ; **flux 8 canaux** : chaque canal ressort sur le même canal ; **limiteur** : carrés pleine échelle (50, 100, 1 000 Hz, quatre réglages extrêmes) jamais au-dessus de −0,2 dBFS, sinus à 0,9 inchangé, sinus de 40, 50 et 100 Hz au-dessus du plafond ramenés au plafond avec moins de 0,1 % de distorsion ; **NaN/Inf** injectés : sortie toujours finie, canal revenu au niveau attendu ; **rafale de ±3,4·10³⁸** : sortie finie, jamais muette, niveau attendu retrouvé. |
+| `MatcherTests` | Studio Display reconnu : **identité réelle relevée** (`Studio Display Audio Control:05AC:1114`, 8 canaux), nom traduit, autre format d'UID, fabricant absent ; rejetés : haut-parleurs du Mac, AirPods, pilote virtuel « USB » (eqMac), micro de l'écran, adaptateur USB-C Apple, écran LG, appareil AirPlay nommé « Studio Display », agrégat. |
 
 ## 2. Chaîne audio de bout en bout — MACHINE
 
@@ -68,7 +68,7 @@ refuse de démarrer s'il ne peut pas s'exclure.
 | AirPods | — | **À FAIRE** (logique identique à « autre sortie », couverte ci-dessus). |
 | Changement de fréquence 48 → 44,1 → 48 kHz (haut-parleurs du Mac, puis **Studio Display**) | MACHINE (`audioctl rate`) | Moteur reconstruit automatiquement à chaque changement ; auto-test réussi à 44,1 kHz sur l'écran. |
 | Autorisation retirée dans Réglages Système pendant la lecture | HUMAIN + journaux | **Le son continue** ; l'app reste en marche, aucun événement. La vérification faite avant le prochain montage du moteur traite le refus. |
-| Échec de démarrage du moteur (`-SimulateEngineFailure YES`) | MACHINE | État « Erreur » + Réessayer, moteur non démarré, donc **original jamais coupé** ; une seule tentative, sans boucle. Nouvel essai automatique dès que la configuration change (fréquence, canaux, sortie). Revérifié après la revue (journaux : une seule tentative). |
+| Échec de démarrage du moteur (`-SimulateEngineFailure YES`) | MACHINE | État « Erreur » + Réessayer, moteur non démarré, donc **original jamais coupé** ; une tentative, plus un seul nouvel essai automatique 3 s après (depuis 1.0.1), sans boucle. Nouvel essai automatique dès que la configuration change (fréquence, canaux, sortie). Revérifié après la revue (journaux : une seule tentative). |
 
 ## 6. Ressources — MACHINE (build Release)
 
@@ -102,10 +102,29 @@ Trois revues indépendantes (Claude, Codex, Grok) : rapports et synthèse dans
 
 | Test | Comment |
 |---|---|
-| Débrancher / rebrancher le câble du Studio Display en cours de lecture | Vérifier « Aucun Studio Display connecté » puis « Actif » au retour, sans clic. Journaux : `log show --last 5m --info --predicate 'subsystem == "com.jcbaptiste.StudioEQ"'`. |
+| Changement rapide d'utilisateur, Studio EQ ouvert dans les deux sessions | Journaux : moteur arrêté quand la session passe en arrière-plan, remonté au retour ; le son de l'autre session n'est ni coupé ni doublé. |
+| Écouter une basse forte avec les graves à +6 dB (limiteur au travail) | Plus de grain ni de saturation dans les graves (correction du limiteur, 1.0.1). |
+| Débrancher / rebrancher le câble du Studio Display en cours de lecture | Vérifier « Aucun Studio Display connecté » puis « Actif » au retour, sans clic. Journaux : `/usr/bin/log show --last 5m --info --predicate 'subsystem == "com.jcbaptiste.StudioEQ"'` (chemin complet : sous zsh, `log` seul est une commande intégrée). |
 | Basculer vers des AirPods et revenir | État « Inactif : la sortie son est … », son des AirPods non traité. |
 | Mise en veille puis réveil avec l'écran sélectionné | Le moteur est arrêté à la veille et remonté au réveil ; le son doit reprendre égalisé. |
 | Cocher « Ouvrir à l'ouverture de session », redémarrer le Mac | Studio EQ présent dans la barre des menus et actif si l'écran est la sortie. |
 | Réglages conservés après « Quitter » puis relance | Modifier un curseur, quitter, relancer. |
 | Lecture prolongée de musique réelle (≥ 1 h) | Aucun craquement ; CPU stable (Moniteur d'activité). |
 | Écouter les curseurs après le passage au préampli fixe | Monter et baisser chaque curseur : seule sa bande doit changer, sans saut de volume général. |
+
+## 9. Validation après la revue finale (22 novembre 2026)
+
+Revue finale de la version 1.0.0 publiée : [revues/finale/](revues/finale/SYNTHESE.md).
+Corrections de la version 1.0.1 :
+
+| Vérification | Méthode | Résultat |
+|---|---|---|
+| Tests unitaires | AUTO | 21/21 (3 nouveaux : distorsion du limiteur, échantillons démesurés, identité réelle de l'écran). |
+| Les deux nouveaux tests DSP détectent bien les défauts | MACHINE | Lancés sur le code 1.0.0 : **échec**, 3,2 % de distorsion à 40 Hz (2,6 % à 50 Hz, 1,4 % à 100 Hz), et sortie muette (−∞ dB) après la rafale. Réussis sur le code corrigé. |
+| Contrôles de `release.sh` | MACHINE | Passent sur l'app 1.0.0 publiée ; bloquent le build de validation (symboles `SelfTest`) et un build Debug (droits en plus du sandbox, dont `get-task-allow`). |
+| `SKIP_NOTARIZATION=1` exporté puis `make release` | MACHINE (`make -n`) | Le script reçoit `SKIP_NOTARIZATION=0`. |
+| DMG d'essai (`make dmg`) avec les nouveaux contrôles | MACHINE | Build Release 1.0.1 signé Developer ID : tous les contrôles passent. |
+| Deuxième copie lancée pendant que l'app tourne | MACHINE + journaux | Elle quitte (« another instance is running ») ; la première reste active. |
+| Échec de montage simulé (`-SimulateEngineFailure YES`, build de validation) | MACHINE + journaux | Échec, « automatic retry after a failure » 3 s plus tard avec nouvelle vérification, second échec, puis plus aucune tentative. Son jamais coupé. |
+| **Deux copies lancées au même instant** (`open -n` ×2) | MACHINE + journaux | Une seule quitte, l'autre monte le moteur et passe « active » sur le Studio Display. |
+

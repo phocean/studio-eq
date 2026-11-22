@@ -108,9 +108,11 @@ tccutil reset AudioCapture com.jcbaptiste.StudioEQ
   (`Studio Display Audio Control:05AC:1114`). Un futur modèle avec un autre nom de produit USB
   ne serait pas reconnu sans mise à jour.
 - Une seule instance tourne à la fois : une seconde copie lancée (depuis le DMG par exemple)
-  se ferme aussitôt sans toucher au son.
+  se ferme aussitôt sans toucher au son. Avec le changement rapide d'utilisateur, Studio EQ
+  n'égalise que dans la session au premier plan.
 - Avec de fortes accentuations (au-delà de +3 dB au total) sur une musique déjà au maximum, le
-  limiteur de sortie travaille : pas de saturation, mais une légère compression des crêtes.
+  limiteur de sortie baisse le niveau un instant : pas de saturation ni de distorsion ajoutée,
+  mais les passages les plus forts sont légèrement compressés.
 - Les tests matériels encore à faire sont listés dans [TESTS.md](docs/TESTS.md).
 
 ## Licence

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Build and unit tests on every push and pull request (ad hoc signing, no secrets).
+# Unit tests and Release build on every push and pull request (ad hoc signing, no secrets).
 name: CI
 
 on:
@@ -22,6 +22,9 @@ jobs:
           xcodebuild -version
       - name: Unit tests
         run: make test
-      - name: Test log
+      - name: Release build
+        # The distributed configuration (no VALIDATION, optimized), ad hoc signed.
+        run: make build
+      - name: Logs
         if: failure()
-        run: tail -100 build/test.log
+        run: tail -100 build/test.log build/build.log 2>/dev/null || true

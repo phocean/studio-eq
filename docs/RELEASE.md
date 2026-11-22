@@ -19,7 +19,10 @@ Dans l'ordre, `make publish` :
 5. seulement alors, crée et pousse l'étiquette `vX.Y.Z` ;
 6. crée la release GitHub avec le DMG et son `.sha256`, et affiche son adresse.
 
-Un échec aux étapes 1 à 4 ne laisse aucune trace sur GitHub.
+Un échec aux étapes 1 à 4 ne laisse aucune trace sur GitHub. Si l'étape 6 échoue (réseau,
+`gh` non connecté), l'étiquette est retirée de GitHub et du Mac : il suffit de relancer
+`make publish`. `make release` et `make publish` notarisent toujours, même si
+`SKIP_NOTARIZATION=1` traîne dans le terminal après un `make dmg`.
 
 ## Nouvelle version
 
@@ -58,8 +61,11 @@ Une clé d'API App Store Connect (`.p8`) fonctionne aussi : `scripts/release.sh`
 
 - signature valide, autorité **Developer ID Application**, **horodatage sécurisé**,
   **Hardened Runtime** ;
-- un seul droit : le sandbox (pas de réseau, pas de micro, **pas de `get-task-allow`**) ;
-- aucun outil de validation dans le binaire (`--selftest`, `-TargetDeviceUID`) ;
+- droits lus comme une liste de propriétés : **exactement** `{app-sandbox: true}` (pas de
+  réseau, pas de micro, **pas de `get-task-allow`**) ;
+- aucun outil de validation dans le binaire : ni symbole `SelfTest` (`nm`), ni marqueur
+  `--permission-probe` ou `SimulateEngineFailure` (`strings`). Les chaînes Swift de 15 octets
+  ou moins ne sont pas visibles par `strings`, d'où ces marqueurs longs ;
 - numéro de version identique à celui demandé ;
 - notarisation « Accepted » (sinon le journal d'Apple est affiché), ticket agrafé, DMG accepté
   par Gatekeeper (`spctl`).

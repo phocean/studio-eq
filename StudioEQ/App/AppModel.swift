@@ -67,18 +67,24 @@ final class AppModel {
     /// was run for: every new start (output switch, sample-rate change, wake, toggle) checks
     /// again, because a permission revoked meanwhile would otherwise mute the display (the tap
     /// mutes the originals but delivers only zeros).
-    private enum Permission: Equatable { case unknown, checking, granted, denied, failed(String) }
+    private enum Permission: Equatable { case unknown, checking, granted, denied }
     private var permission: Permission = .unknown
     /// The running check, and a generation number so a result that arrives after the context
     /// changed (output switched, sleep, toggle) is ignored.
     private var checkTask: Task<Void, Never>?
     private var checkGeneration = 0
     private var checkedOutputUID: String?
-    /// Configuration whose engine failed to start, and why: not retried while the hardware stays
-    /// in that same configuration (no retry loop), retried as soon as it changes, or on Retry.
+    /// Configuration whose engine start or capture check failed, and why: not retried while the
+    /// hardware stays in that same configuration (no retry loop), except once automatically
+    /// (`autoRetryUsed`); retried as soon as it changes, on wake, or on Retry.
     private var failedConfiguration: String?
     private var failureMessage = ""
+    private var autoRetryUsed = false
+    private var retryTask: Task<Void, Never>?
     private var isAsleep = false
+    /// Fast user switching moved this login session to the background. Another user's copy of
+    /// Studio EQ may run in the foreground session: two engines would tap each other's output.
+    private var isSessionInactive = false
     private var isShutDown = false
     private var observers: [NSObjectProtocol] = []
 
@@ -105,6 +111,24 @@ final class AppModel {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.isAsleep = false
+                self.rearm()
+                self.reconcile()
+            }
+        })
+        // Fast user switching: the engine runs only while this session is the active one, like
+        // sleep. The instance lock (AppInstance) is per user and cannot see other users' copies.
+        observers.append(nc.addObserver(forName: NSWorkspace.sessionDidResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.isSessionInactive = true
+                self.reconcile()
+            }
+        })
+        observers.append(nc.addObserver(forName: NSWorkspace.sessionDidBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.isSessionInactive = false
+                self.rearm()
                 self.reconcile()
             }
         })
@@ -117,9 +141,18 @@ final class AppModel {
     func retry() {
         stopEngine()
         cancelCheck()
+        rearm()
+        reconcile()
+    }
+
+    /// Forgets past failures and the last permission result: the next engine start checks
+    /// afresh and gets one automatic retry again.
+    private func rearm() {
         permission = .unknown
         failedConfiguration = nil
-        reconcile()
+        autoRetryUsed = false
+        retryTask?.cancel()
+        retryTask = nil
     }
 
     func openPrivacySettings() {
@@ -130,6 +163,7 @@ final class AppModel {
     func shutdown() {
         isShutDown = true
         cancelCheck()
+        retryTask?.cancel()
         stopEngine()
         monitor.stop()
     }
@@ -157,7 +191,7 @@ final class AppModel {
         displaySpeakers = devices.first(where: isTarget)
         monitor.watch(device: currentOutput?.id)
 
-        guard !isAsleep else { cancelCheck(); stopEngine(); return }
+        guard !isAsleep, !isSessionInactive else { cancelCheck(); stopEngine(); return }
         guard isEnabled else { cancelCheck(); stopEngine(); status = .disabled; return }
         guard let output = currentOutput, isTarget(output) else {
             cancelCheck()
@@ -165,8 +199,7 @@ final class AppModel {
             status = displaySpeakers == nil ? .noDisplay : .otherOutput
             // Leaving the display re-arms everything: the permission is checked again (the user
             // may have changed it meanwhile) and a failed configuration may be retried.
-            permission = .unknown
-            failedConfiguration = nil
+            rearm()
             return
         }
         if let engine, engine.device.id == output.id, engine.device.uid == output.uid,
@@ -188,9 +221,8 @@ final class AppModel {
         switch permission {
         case .granted: break
         case .denied: status = .permissionDenied; return
-        case .failed(let message): status = .error(message); return
         case .checking: status = .checkingPermission; return
-        case .unknown: startCheck(on: output); return
+        case .unknown: startCheck(on: output, configuration: configuration); return
         }
         permission = .unknown  // consumed: the next engine start checks again
 
@@ -203,29 +235,58 @@ final class AppModel {
             let e = try TapEngine(device: output, parameters: parameters)
             engine = e
             status = .active
+            autoRetryUsed = false
             log.info("active on \(output.description, privacy: .private(mask: .hash)) rate=\(output.nominalSampleRate) channels=\(output.outputChannels)")
         } catch {
-            failedConfiguration = configuration
-            failureMessage = String(describing: error)
-            status = .error(failureMessage)
             log.error("engine failed: \(String(describing: error), privacy: .public)")
+            recordFailure(String(describing: error), configuration: configuration)
         }
     }
 
-    private func startCheck(on output: OutputDevice) {
+    /// Shows the failure and blocks this configuration (sound untouched: nothing is muted). One
+    /// automatic retry 3 s later lets a display still waking up, or briefly busy, recover without
+    /// a click; after that only a change of configuration, a wake or Retry tries again.
+    private func recordFailure(_ message: String, configuration: String) {
+        failedConfiguration = configuration
+        failureMessage = message
+        status = .error(message)
+        guard !autoRetryUsed else { return }
+        autoRetryUsed = true
+        retryTask?.cancel()
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            guard let self, !Task.isCancelled, self.failedConfiguration == configuration else { return }
+            log.info("automatic retry after a failure")
+            self.retryTask = nil
+            self.failedConfiguration = nil
+            self.reconcile()
+        }
+    }
+
+    private func startCheck(on output: OutputDevice, configuration: String) {
         permission = .checking
         status = .checkingPermission
         checkGeneration += 1
         let generation = checkGeneration
         checkedOutputUID = output.uid
         checkTask = Task { [weak self] in
-            let result: Permission
-            do { result = try await CaptureCheck.run(device: output) == .granted ? .granted : .denied }
-            catch { result = .failed(String(describing: error)) }
+            let result: Result<CaptureCheck.Outcome, any Error>
+            do { result = .success(try await CaptureCheck.run(device: output)) }
+            catch { result = .failure(error) }
             guard let self, generation == self.checkGeneration, !Task.isCancelled else { return }
-            log.info("capture permission: \(String(describing: result), privacy: .public)")
             self.checkTask = nil
-            self.permission = result
+            switch result {
+            case .success(let outcome):
+                log.info("capture permission: \(String(describing: outcome), privacy: .public)")
+                self.permission = outcome == .granted ? .granted : .denied
+            case .failure(let error):
+                // Not a refusal: the check could not conclude (output stopped, timeout). Handled
+                // like an engine failure, so a configuration change or the automatic retry
+                // checks again.
+                log.error("capture check failed: \(String(describing: error), privacy: .public)")
+                self.permission = .unknown
+                self.recordFailure(String(describing: error), configuration: configuration)
+            }
             self.reconcile()
         }
     }

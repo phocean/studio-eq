@@ -33,7 +33,7 @@ enum SelfTest {
             finish(report: deviceReport())
             return true
         }
-        if args.contains("--ab-test") || args.contains("--permission-probe"), AppInstance.otherInstanceRunning {
+        if args.contains("--ab-test") || args.contains("--permission-probe"), !AppInstance.acquireInstanceLock() {
             finish(report: "RESULT: FAIL — quit the running Studio EQ first")
             return true
         }
@@ -51,7 +51,7 @@ enum SelfTest {
         }
         guard args.contains("--selftest") else { return false }
         // Two engines on the same output would chain (each muting the other's output).
-        if AppInstance.otherInstanceRunning {
+        if !AppInstance.acquireInstanceLock() {
             finish(report: "RESULT: FAIL — quit the running Studio EQ first")
             return true
         }

@@ -1,7 +1,8 @@
 # Architecture
 
 Application de barre des menus (`LSUIElement`), Swift 6 / SwiftUI, macOS 15+, Apple Silicon,
-sandbox actif, Hardened Runtime, **aucune dépendance externe**. ≈ 750 lignes de code applicatif, plus ≈ 380 lignes d’outils de validation (`SelfTest.swift`) et ≈ 220 lignes de tests.
+sandbox actif, Hardened Runtime, **aucune dépendance externe**. Hors commentaires et lignes vides (version 1.0.1) : ≈ 1 150 lignes de code applicatif, plus
+≈ 340 lignes d’outils de validation (`SelfTest.swift`) et ≈ 300 lignes de tests.
 
 ## Fichiers
 
@@ -12,8 +13,8 @@ sandbox actif, Hardened Runtime, **aucune dépendance externe**. ≈ 750 lignes 
 | | `DeviceMonitor.swift` | Surveillance **événementielle** : sortie par défaut, liste des périphériques, fréquence/format/vie de la sortie courante. Coalescence 150 ms, pas de polling. |
 | | `CaptureCheck.swift` | Vérifie que la capture audio est autorisée **avant** de couper quoi que ce soit. |
 | | `TapEngine.swift` | Chemin audio : process tap + agrégat privé + IOProc ; montage, démarrage, démontage. |
-| `StudioEQ/DSP` | `EQDesign.swift` | Réglages, géométrie des bandes, coefficients RBJ, réponse en fréquence, préampli automatique. |
-| | `EQProcessor.swift` | Traitement temps réel multicanal, lissage, compteurs de santé. |
+| `StudioEQ/DSP` | `EQDesign.swift` | Réglages, géométrie des bandes, coefficients RBJ, réponse en fréquence, préampli fixe (−3 dB). |
+| | `EQProcessor.swift` | Traitement temps réel multicanal, lissage, limiteur, contrôle des échantillons invalides. |
 | `StudioEQ/App` | `StudioEQApp.swift` | Point d'entrée, `MenuBarExtra`, icône d'état. |
 | | `AppModel.swift` | Logique de décision (`reconcile`), préférences, lancement à l'ouverture de session. |
 | | `MenuContent.swift` | Panneau du menu. |
@@ -40,9 +41,14 @@ sortie = Studio Display, moteur à (re)monter → CaptureCheck (async, annulable
                          capture refusée    → moteur arrêté        → « autorisation manquante »
                          capture accordée   → moteur monté ; l'accord est consommé : le montage
                                               suivant revérifie     → « actif »
+                         vérification non concluante (sortie arrêtée, délai) → comme un échec de montage
 échec du montage                            → moteur arrêté        → « erreur » + Réessayer ;
-                                              pas de nouvel essai tant que la configuration
-                                              (UID, fréquence, canaux) ne change pas
+                                              un seul nouvel essai automatique après 3 s,
+                                              puis plus rien tant que la configuration
+                                              (UID, fréquence, canaux) ne change pas, ni
+                                              réveil, ni Réessayer
+session en arrière-plan (changement rapide
+d'utilisateur)                              → moteur arrêté        → (rien jusqu'au retour)
 ```
 
 Un Studio Display seulement **présent** ne déclenche jamais l'égalisation : seule la sortie
@@ -53,9 +59,20 @@ système par défaut compte.
   désactivation ou à « Quitter ». Elle échoue aussi en 2 s si le périphérique cesse de répondre
   (écran débranché) au lieu d'attendre son délai maximal.
 - **Veille** : moteur arrêté proprement, plus aucun montage jusqu'au réveil, même si un
-  événement matériel arrive entre-temps ; au réveil, montage complet avec nouvelle vérification.
-- **Une seule instance** (contrôle au lancement ; pas `LSMultipleInstancesProhibited`, qui empêcherait aussi les tests unitaires de démarrer pendant que l’app tourne) : deux
-  instances captureraient chacune la sortie de l'autre, donc silence ou boucle.
+  événement matériel arrive entre-temps ; au réveil, montage complet avec nouvelle vérification,
+  et les échecs passés sont oubliés.
+- **Changement rapide d'utilisateur** : même traitement que la veille tant que la session est
+  en arrière-plan (`NSWorkspace.sessionDidResignActive` / `sessionDidBecomeActive`). La copie
+  d'un autre utilisateur peut tourner dans la session au premier plan, et le verrou ci-dessous,
+  propre à chaque utilisateur, ne la voit pas.
+- **Une seule instance** : verrou exclusif `flock` sur un fichier du conteneur, pris au
+  lancement et libéré par le noyau à la sortie ou au plantage. Contrairement à l'ancienne
+  lecture de la liste des apps lancées, il est atomique : deux copies lancées au même instant ne
+  peuvent pas l'obtenir toutes les deux. Pas de `LSMultipleInstancesProhibited`, qui empêcherait
+  aussi les tests unitaires de démarrer pendant que l’app tourne. Deux instances captureraient
+  chacune la sortie de l'autre, donc silence ou boucle.
+- **Fréquence d'échantillonnage** vérifiée au montage (8 à 384 kHz), sinon refus de démarrer :
+  une fréquence nulle ou aberrante donnerait des filtres muets alors que l'original est coupé.
 - **Format du tap** vérifié au montage (Float32 entrelacé, 1 à 16 canaux), sinon refus de
   démarrer : l'original n'est jamais coupé pour un flux qui sortirait muet.
 

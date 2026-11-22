@@ -5,15 +5,24 @@ import CoreAudio
 import XCTest
 @testable import StudioEQ
 
-/// Identity fixtures (serial numbers are fictitious). The Studio Display UID format comes from a public user report
-/// (AppleUSBAudioEngine:Apple Inc.:Studio Display:<serial>:8,9); the model UID follows the
-/// standard "<product>:<VID>:<PID>" pattern of USB audio devices. Both must be re-checked on
-/// real hardware with `StudioEQ --list-devices` (see docs/TESTS.md).
+/// Identity fixtures (serial numbers are fictitious). The reference case is the identity read on a
+/// real Studio Display (`--list-devices`, docs/selftest-studio-display-48k.txt): model UID
+/// "Studio Display Audio Control:05AC:1114". The other model UIDs are variants the matcher must
+/// also accept (the USB product string can differ between firmware versions).
 final class MatcherTests: XCTestCase {
     private func device(name: String = "x", uid: String, model: String, maker: String,
                         transport: UInt32 = kAudioDeviceTransportTypeUSB, out: Int = 2) -> OutputDevice {
         OutputDevice(id: 1, uid: uid, name: name, manufacturer: maker, modelUID: model,
                      transportType: transport, outputChannels: out, nominalSampleRate: 48_000)
+    }
+
+    /// Exactly what the HAL reported for the display used to validate Studio EQ (8 channels).
+    func testRealStudioDisplayIdentityIsRecognised() {
+        let d = device(name: "Haut-parleurs Studio Display",
+                       uid: "AppleUSBAudioEngine:Apple Inc.:Studio Display:00000000000000000000000000000000:8,9",
+                       model: "Studio Display Audio Control:05AC:1114", maker: "Apple Inc.", out: 8)
+        XCTAssertTrue(StudioDisplayMatcher.isStudioDisplaySpeakers(d))
+        XCTAssertEqual(StudioDisplayMatcher.modelUIDVendor(d.modelUID), "05ac")
     }
 
     func testStudioDisplaySpeakersAreRecognised() {

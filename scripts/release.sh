@@ -58,13 +58,21 @@ SIG=$(codesign -dvv "$APP" 2>&1)
 grep -q "^Authority=Developer ID Application" <<<"$SIG" || fail "not signed with a Developer ID Application certificate"
 grep -q "^Timestamp=" <<<"$SIG" || fail "no secure timestamp"
 grep -q "flags=.*runtime" <<<"$SIG" || fail "Hardened Runtime is off"
-ENT=$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)
-grep -q "get-task-allow" <<<"$ENT" && fail "debugger entitlement (get-task-allow) present"
-grep -q "com.apple.security.app-sandbox" <<<"$ENT" || fail "App Sandbox missing"
-# Exactly one entitlement: the sandbox (no network, no microphone, nothing else).
-[[ $(grep -c "<key>" <<<"$ENT") == 1 ]] || fail "unexpected entitlements: $ENT"
-strings "$APP/Contents/MacOS/StudioEQ" | grep -q -E -- "--selftest|TargetDeviceUID" \
-  && fail "validation tools compiled into the distributed app"
+# Exactly one entitlement, the sandbox, set to true: no debugger (get-task-allow), no network,
+# no microphone, nothing else. Parsed as a plist, not matched as text.
+ENT=$(codesign -d --entitlements - --xml "$APP" 2>/dev/null | plutil -convert json -o - -)
+[[ $ENT == '{"com.apple.security.app-sandbox":true}' ]] || fail "entitlements must be exactly the App Sandbox: $ENT"
+# Validation tools (SelfTest, overrides) must not be compiled in. Outputs are captured first:
+# `strings | grep -q` under pipefail misses a match (grep exits early, strings gets SIGPIPE), and
+# Swift strings of 15 bytes or less are stored inline, invisible to strings: look for the
+# SelfTest symbols and for long markers only.
+BIN=$APP/Contents/MacOS/StudioEQ
+SYMBOLS=$(nm "$BIN")
+STRINGS=$(strings "$BIN")
+grep -q "8AppModelC" <<<"$SYMBOLS" || fail "no symbol table in $BIN: cannot check for validation tools"
+grep -q "8SelfTestO" <<<"$SYMBOLS" && fail "validation tools (SelfTest) compiled into the distributed app"
+grep -q -E -- "--permission-probe|SimulateEngineFailure" <<<"$STRINGS" \
+  && fail "validation overrides compiled into the distributed app"
 [[ $(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist") == "$VERSION" ]] \
   || fail "version mismatch"
 echo "ok: Developer ID, timestamp, Hardened Runtime, sandbox only, no test tools, version $VERSION"

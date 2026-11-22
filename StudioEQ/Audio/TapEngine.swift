@@ -35,6 +35,8 @@ final class TapEngine {
 
     /// IO buffer size requested on the aggregate: 256 frames ≈ 5.3 ms at 48 kHz.
     static let preferredBufferFrames: UInt32 = 256
+    /// Sample rates the engine accepts (NaN and infinities fall outside the range).
+    static let supportedSampleRates: ClosedRange<Double> = 8_000...384_000
 
     init(device: OutputDevice, parameters: EQParameters) throws {
         self.device = device
@@ -103,6 +105,11 @@ final class TapEngine {
         }
         bufferFrames = (try? HAL.value(aggregateID, kAudioDevicePropertyBufferFrameSize, initial: UInt32(0))) ?? 0
         sampleRate = try HAL.value(aggregateID, kAudioDevicePropertyNominalSampleRate, initial: Float64(0))
+        // A zero or garbage rate would build filters that output only silence while the tap
+        // mutes the originals: refuse to start instead (sound stays untouched).
+        guard Self.supportedSampleRates.contains(sampleRate) else {
+            throw CoreAudioError(status: -1, operation: "unsupported sample rate \(sampleRate)")
+        }
         tapFormat = (try? HAL.value(tapID, kAudioTapPropertyFormat, initial: AudioStreamBasicDescription())) ?? tapFormat
 
         // 4. Find the tap among the aggregate's input streams (taps come after sub-device inputs)
@@ -165,6 +172,10 @@ final class TapEngine {
                 AudioDeviceDestroyIOProcID(aggregateID, ioProcID)
             }
             AudioHardwareDestroyAggregateDevice(aggregateID)
+            // IO stopped: the count is final. Each reset silenced one channel for one IO cycle.
+            if let resets = processor?.filterResets.load(ordering: .relaxed), resets > 0 {
+                log.error("\(resets) filter resets: an app sent NaN or infinite samples")
+            }
         }
         if tapID != kAudioObjectUnknown { AudioHardwareDestroyProcessTap(tapID) }
         ioProcID = nil

@@ -194,6 +194,52 @@ final class EQProcessorTests: XCTestCase {
         XCTAssertEqual(measured, EQDesign.responseDB(.defaults, at: 1_500, sampleRate: rate) + EQDesign.preampDB, accuracy: 0.05)
     }
 
+    /// Amplitude of the `frequency` component of `x` (integer number of periods expected).
+    private func amplitude(_ x: [Float], frequency: Double) -> Double {
+        var c = 0.0, s = 0.0
+        for (i, v) in x.enumerated() {
+            let w = 2 * Double.pi * frequency * Double(i) / rate
+            c += Double(v) * cos(w); s += Double(v) * sin(w)
+        }
+        return 2 * (c * c + s * s).squareRoot() / Double(x.count)
+    }
+
+    /// A steady bass note above the ceiling must be turned down, not clipped: the 25 ms hold keeps
+    /// the gain constant between crests. Without it: ≈ 3 % THD at 40 Hz, 1.4 % at 100 Hz.
+    func testLimiterTurnsSteadyBassDownWithoutDistortion() {
+        for f in [40.0, 50, 100] {
+            let p = EQProcessor(sampleRate: rate, parameters: EQParameters(EQSettings(bass: 0, mid: 0, treble: 0)))
+            // Flat curve, input at 2.0: 1.41 after the preamp, 3.2 dB above the ceiling.
+            let out = run(p, frequency: f, seconds: 2, amplitude: 2)
+            let left = stride(from: 0, to: out.count, by: 2).map { out[$0] }
+            XCTAssertLessThanOrEqual(left.map { abs($0) }.max()!, EQProcessor.limiterCeiling + 1e-6, "\(f) Hz peak")
+            let steady = Array(left.suffix(24_000))  // last 0.5 s: whole periods of 40/50/100 Hz
+            let fundamental = amplitude(steady, frequency: f)
+            XCTAssertEqual(fundamental, Double(EQProcessor.limiterCeiling), accuracy: 0.01, "\(f) Hz level")
+            let harmonics = (2...10).map { amplitude(steady, frequency: f * Double($0)) }
+            let thd = harmonics.reduce(0) { $0 + $1 * $1 }.squareRoot() / fundamental
+            XCTAssertLessThan(thd, 0.001, "\(f) Hz THD \(thd * 100) %")
+        }
+    }
+
+    /// A finite but absurd sample (1e38) used to overflow Float to infinity, drive the limiter
+    /// envelope to infinity and silence every channel until the engine was rebuilt.
+    func testHugeFiniteSamplesDoNotSilenceTheOutput() {
+        let s = EQSettings(bass: 0, mid: 0, treble: 12)  // +12 dB near Nyquist: the burst overflows
+        let p = EQProcessor(sampleRate: rate, parameters: EQParameters(s))
+        let total = 282 * 256  // ≈ 1.5 s, whole IO cycles
+        var input = [Float](repeating: 0, count: total * 2)
+        for i in 0..<total { let v = 0.5 * Float(sin(2 * Double.pi * 1_500 * Double(i) / rate)); input[2 * i] = v; input[2 * i + 1] = v }
+        for i in 9_600..<9_664 { let v: Float = i % 2 == 0 ? .greatestFiniteMagnitude : -.greatestFiniteMagnitude
+            input[2 * i] = v; input[2 * i + 1] = v }
+        let out = runIOProc(p, input: input, channels: 2)
+        XCTAssertTrue(out.allSatisfy { $0.isFinite })
+        XCTAssertLessThanOrEqual(out.map { abs($0) }.max()!, EQProcessor.limiterCeiling + 1e-6)
+        let left = stride(from: 2 * (total - 24_000), to: 2 * total, by: 2).map { out[$0] }  // last 0.5 s
+        let expected = EQDesign.responseDB(s, at: 1_500, sampleRate: rate) + EQDesign.preampDB
+        XCTAssertEqual(rmsDB(left[...]) - 20 * log10(0.5 / 2.0.squareRoot()), expected, accuracy: 0.05, "output recovered")
+    }
+
     /// One NaN sample from a misbehaving app must not poison the channel's filter state forever.
     func testNaNInputIsContainedAndTheChannelRecovers() {
         let p = EQProcessor(sampleRate: rate, parameters: EQParameters(.defaults))

@@ -1,8 +1,10 @@
 # Synthèse des trois revues de code — 21 novembre 2026
 
+Revue finale de la version 1.0.0 publiée : [finale/SYNTHESE.md](finale/SYNTHESE.md).
+
 Trois relecteurs indépendants (Claude, Codex, Grok), même consigne ([BRIEF.md](BRIEF.md)),
-lecture seule, sans accès aux rapports des autres : [claude.md](claude.md) ·
-[codex.md](codex.md) · [grok.md](grok.md).
+lecture seule, sans accès aux rapports des autres : [revue-claude.md](revue-claude.md) ·
+[revue-codex.md](revue-codex.md) · [revue-grok.md](revue-grok.md).
 
 Verdict commun : cœur sain (droits minimaux, aucune fuite du son capté, chemin temps réel
 propre, démontage correct), mais **pas publiable en l'état**. Tous les constats ci-dessous ont

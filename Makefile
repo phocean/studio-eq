@@ -88,13 +88,16 @@ scenario: validation $(AUDIOCTL) ## Automated output-switching scenarios (moves 
 dmg: ## Signed Developer ID DMG, checked but NOT notarized (local trial)
 	@VERSION="$(VERSION)" BUILD_NUMBER="$(BUILD_NUMBER)" TEAM_ID="$(TEAM_ID)" SKIP_NOTARIZATION=1 zsh scripts/release.sh
 
+# SKIP_NOTARIZATION=0 is forced: a SKIP_NOTARIZATION=1 left in the shell after `make dmg` must
+# never let `make release` or `make publish` ship a DMG that Gatekeeper refuses.
 release: ## Signed, checked, notarized and stapled DMG, not published (credentials: docs/RELEASE.md)
 	@VERSION="$(VERSION)" BUILD_NUMBER="$(BUILD_NUMBER)" TEAM_ID="$(TEAM_ID)" \
-	  NOTARY_PROFILE="$(NOTARY_PROFILE)" zsh scripts/release.sh
+	  NOTARY_PROFILE="$(NOTARY_PROFILE)" SKIP_NOTARIZATION=0 zsh scripts/release.sh
 
 # The DMG is built on this Mac: the Developer ID private key never leaves its keychain. The source
 # must be committed and pushed first, so the published binary matches the published source (GPL).
-# The tag is pushed only once the DMG is notarized: a failed run leaves nothing on GitHub.
+# The tag is pushed only once the DMG is notarized, and removed again if the GitHub release cannot
+# be created: a failed run leaves nothing on GitHub and can simply be run again.
 publish: ## Test, release, then tag vX.Y.Z and upload the DMG as a GitHub release
 	@test -z "$$(git status --porcelain)" || { echo "publish: commit your changes first" >&2; exit 1; }
 	@git fetch --quiet origin && test "$$(git rev-parse HEAD)" = "$$(git rev-parse @{u})" \
@@ -103,8 +106,11 @@ publish: ## Test, release, then tag vX.Y.Z and upload the DMG as a GitHub releas
 	  || { echo "publish: $(TAG) already exists on GitHub (bump MARKETING_VERSION in project.yml)" >&2; exit 1; }
 	@$(MAKE) --no-print-directory test
 	@$(MAKE) --no-print-directory release
-	@git tag -a $(TAG) -m "Studio EQ $(VERSION)" && git push --quiet origin $(TAG)
-	@gh release create $(TAG) $(DMG) $(DMG).sha256 --verify-tag --title "Studio EQ $(VERSION)" --generate-notes
+	@git tag -a $(TAG) -m "Studio EQ $(VERSION)"
+	@git push --quiet origin $(TAG) || { git tag -d $(TAG) >/dev/null; echo "publish: could not push $(TAG)" >&2; exit 1; }
+	@gh release create $(TAG) $(DMG) $(DMG).sha256 --verify-tag --title "Studio EQ $(VERSION)" --generate-notes \
+	  || { gh release delete $(TAG) --yes >/dev/null 2>&1; git push --quiet --delete origin $(TAG); git tag -d $(TAG) >/dev/null; \
+	       echo "publish: GitHub release failed, $(TAG) removed (the notarized DMG is still in build/release)" >&2; exit 1; }
 	@echo "Published $$(gh release view $(TAG) --json url -q .url)"
 
 clean: ## Remove build products (build/, dist/, generated project)

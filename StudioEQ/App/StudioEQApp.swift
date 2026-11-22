@@ -2,7 +2,10 @@
 // Copyright © 2026 Jean-Christophe Baptiste
 
 import AppKit
+import os
 import SwiftUI
+
+private let log = Logger(subsystem: "com.jcbaptiste.StudioEQ", category: "app")
 
 @main
 struct StudioEQApp: App {
@@ -38,19 +41,32 @@ enum AppInstance {
     /// Hosting unit tests: no engine, no menu bar item.
     static let isTesting = NSClassFromString("XCTestCase") != nil
 
-    /// Another copy of Studio EQ (same bundle identifier) is already running. Two instances would
-    /// each tap the other's processed output: the display would go silent or feed back.
-    nonisolated static var otherInstanceRunning: Bool {
-        guard let id = Bundle.main.bundleIdentifier else { return false }
-        let me = ProcessInfo.processInfo.processIdentifier
-        return NSRunningApplication.runningApplications(withBundleIdentifier: id)
-            .contains { $0.processIdentifier != me && !$0.isTerminated }
+    /// Takes the per-user instance lock: false if another copy of Studio EQ already holds it.
+    /// Two instances would each tap the other's processed output: the display would go silent or
+    /// feed back. An exclusive `flock` on a file of the app's container is atomic, unlike a look
+    /// at the running applications (two copies launched at the same instant both saw none), and
+    /// the kernel releases it when the process exits or crashes. The descriptor is never closed.
+    /// Other users' copies are out of its reach: `AppModel` stops the engine while this login
+    /// session is in the background.
+    nonisolated static func acquireInstanceLock() -> Bool {
+        let fm = FileManager.default
+        guard let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return true }
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let fd = open(dir.appendingPathComponent("StudioEQ.lock").path, O_RDWR | O_CREAT | O_CLOEXEC, 0o600)
+        guard fd >= 0 else {
+            log.error("instance lock unavailable (errno \(errno, privacy: .public)): running without it")
+            return true
+        }
+        if flock(fd, LOCK_EX | LOCK_NB) == 0 { return true }
+        close(fd)
+        return false
     }
 
     static let model: AppModel? = {
         if isCommandLineMode || isTesting { return nil }
-        if otherInstanceRunning {
+        guard acquireInstanceLock() else {
             // Hand over to the running copy and leave without touching the audio.
+            log.info("another instance is running: quitting")
             DispatchQueue.main.async { NSApp.terminate(nil) }
             return nil
         }

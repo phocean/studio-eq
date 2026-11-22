@@ -102,9 +102,11 @@ tccutil reset AudioCapture com.jcbaptiste.StudioEQ
   (`Studio Display Audio Control:05AC:1114`). A future model with a different USB product name
   would not be recognized without an update.
 - Only one instance runs at a time: a second copy (launched from the DMG, for instance) quits
-  immediately without touching the sound.
+  immediately without touching the sound. With fast user switching, Studio EQ equalizes only in
+  the session in front.
 - With strong boosts (more than +3 dB in total) on music already at full scale, the output
-  limiter works: no clipping, but slight peak compression.
+  limiter turns the level down for a moment: no clipping and no added distortion, but the
+  loudest passages are slightly compressed.
 - Hardware tests still to be done are listed in [TESTS.md](docs/TESTS.md).
 
 ## License

@@ -32,23 +32,43 @@ rendait la musique plus forte. Avec un préampli fixe, chaque curseur ne bouge q
 **Limiteur de crête en sortie.** Une courbe ≤ 0 dB ne borne pas les crêtes : les filtres à
 phase minimale décalent les harmoniques. Mesuré (revues de code, simulation) : +3 dBFS en
 crête sur un signal carré pleine échelle à 100 Hz avec les réglages par défaut. Le limiteur
-est commun à tous les canaux (l'image stéréo et spatiale ne bouge pas), à attaque instantanée
-et relâchement de 100 ms, plafond −0,2 dBFS. Il ne fait rien tant qu'aucune crête ne dépasse le
-plafond ; il prend aussi en charge les accentuations au-delà de +3 dB. Tests : sortie ≤ plafond
-sur des carrés pleine échelle avec quatre réglages extrêmes ; sinus à 0,9 inchangé (±0,05 dB).
+est commun à tous les canaux (l'image stéréo et spatiale ne bouge pas), à attaque instantanée,
+**maintien de 25 ms** puis relâchement de 100 ms, plafond −0,2 dBFS. Il ne fait rien tant
+qu'aucune crête ne dépasse le plafond ; il prend aussi en charge les accentuations au-delà de
++3 dB.
+
+Le maintien est ce qui en fait un limiteur et non un écrêteur. Sans lui (version 1.0.0),
+l'enveloppe redescendait entre deux crêtes d'une note grave : chaque crête était aplatie sur le
+plafond, soit 3,2 % de distorsion harmonique à 40 Hz, 2,6 % à 50 Hz et 1,4 % à 100 Hz (revue
+finale, mesuré par le test ci-dessous sur l'ancien code). 25 ms couvrent une demi-période
+jusqu'à 20 Hz : sur une note tenue, le gain reste constant et la note est seulement baissée.
+
+Tests : sortie ≤ plafond sur des carrés pleine échelle avec quatre réglages extrêmes ; sinus à
+0,9 inchangé (±0,05 dB) ; sinus de 40, 50 et 100 Hz à 3,2 dB au-dessus du plafond ramené au
+plafond avec moins de 0,1 % de distorsion.
 
 **Échantillons invalides.** Un `NaN` ou un `Inf` envoyé par une app défaillante resterait pour
 toujours dans l'état récursif du filtre. L'état de chaque canal est contrôlé une fois par cycle
 d'E/S ; s'il n'est plus fini, il est remis à zéro et ce cycle (≈ 5 ms) est rendu silencieux
-sur ce canal seulement. Test : un `NaN` et un `Inf` injectés, puis retour au niveau attendu.
+sur ce canal seulement. Le nombre de remises à zéro est journalisé à l'arrêt du moteur. Test :
+un `NaN` et un `Inf` injectés, puis retour au niveau attendu.
+
+**Échantillons finis mais démesurés.** Une valeur comme 10³⁸, amplifiée par un filtre,
+dépassait la plage d'un `Float` et devenait infinie : l'enveloppe du limiteur devenait infinie
+à son tour et **toute la sortie restait muette** jusqu'au prochain montage du moteur (revue
+finale). Chaque échantillon filtré est désormais borné à ±16 (+24 dBFS) avant le limiteur ; le
+pire cas est le retour normal de l'enveloppe, en ≈ 0,3 s. Test : une rafale de ±3,4·10³⁸ avec
+les aigus à +12 dB, puis retour au niveau attendu.
 
 Réponse totale avec les réglages par défaut (préampli inclus), mesurée en numérique sur le
-Studio Display par l'auto-test (TESTS.md) :
+Studio Display par l'auto-test : rapport [48 kHz](selftest-studio-display-48k.txt), colonne
+`measured`, dont on a retiré le décalage global de +0,29 dB que le rapport indique (il vient de
+la capture de référence, voir TESTS.md §2) :
 
 | Hz | 40 | 80 | 150 | 300 | 700 | 1 500 | 3 000 | 6 000 | 10 000 | 16 000 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Théorie (dB) | −8,97 | −8,51 | −5,94 | −3,14 | −1,76 | 0,00 | −1,50 | −1,66 | −1,06 | −0,99 |
-| Mesure (dB) | −8,96 | −8,46 | −5,97 | −3,05 | −1,74 | +0,02 | −1,51 | −1,66 | −1,06 | −0,99 |
+| Mesure (dB) | −8,96 | −8,50 | −5,93 | −3,13 | −1,76 | 0,00 | −1,51 | −1,66 | −1,07 | −1,00 |
 
 ## Mise en œuvre temps réel (`EQProcessor`)
 
