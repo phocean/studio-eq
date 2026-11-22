@@ -4,6 +4,11 @@ Petite app de barre des menus pour macOS qui égalise automatiquement le son **u
 les haut-parleurs d'un Apple Studio Display sont la sortie audio du système**. Elle n'utilise
 aucun pilote audio virtuel, aucun réseau et aucune dépendance externe.
 
+<p align="center">
+  <img src="docs/images/menu.png" width="300"
+       alt="Menu de Studio EQ : état actif sur les haut-parleurs Studio Display, interrupteur d'égalisation, curseurs graves, médiums et aigus, préampli −3 dB, bouton Valeurs par défaut, option d'ouverture à la session.">
+</p>
+
 - Studio Display sélectionné → égalisation active.
 - AirPods, haut-parleurs du Mac, autre sortie, écran débranché → égalisation inactive, son intact.
 - Bascule automatique à chaque changement, reprise au branchement, au réveil et à l'ouverture de
