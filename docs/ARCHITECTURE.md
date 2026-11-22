@@ -1,7 +1,7 @@
 # Architecture
 
 Application de barre des menus (`LSUIElement`), Swift 6 / SwiftUI, macOS 15+, Apple Silicon,
-sandbox actif, Hardened Runtime, **aucune dépendance externe**. Hors commentaires et lignes vides (version 1.0.1) : ≈ 1 150 lignes de code applicatif, plus
+sandbox actif, Hardened Runtime, **aucune dépendance externe**. Hors commentaires et lignes vides (version 1.1.0) : ≈ 1 150 lignes de code applicatif, plus
 ≈ 340 lignes d’outils de validation (`SelfTest.swift`) et ≈ 300 lignes de tests.
 
 ## Fichiers

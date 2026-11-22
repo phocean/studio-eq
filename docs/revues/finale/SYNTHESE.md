@@ -76,7 +76,7 @@ Gravité : celle retenue après recoupement. ● signalé, — non signalé.
 
 ## Suite donnée (22 novembre 2026)
 
-Constats 1 à 8, 10 à 13 et 18 corrigés pour la version 1.0.1 :
+Constats 1 à 8, 10 à 13 et 18 corrigés dans la version 1.1.0, qui ajoute aussi l'option « Masquer l'icône sans Studio Display » :
 
 - **1** : verrou `flock` dans le conteneur ; moteur arrêté tant que la session est en
   arrière-plan.

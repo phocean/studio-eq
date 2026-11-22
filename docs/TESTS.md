@@ -68,7 +68,7 @@ refuse de démarrer s'il ne peut pas s'exclure.
 | AirPods | — | **À FAIRE** (logique identique à « autre sortie », couverte ci-dessus). |
 | Changement de fréquence 48 → 44,1 → 48 kHz (haut-parleurs du Mac, puis **Studio Display**) | MACHINE (`audioctl rate`) | Moteur reconstruit automatiquement à chaque changement ; auto-test réussi à 44,1 kHz sur l'écran. |
 | Autorisation retirée dans Réglages Système pendant la lecture | HUMAIN + journaux | **Le son continue** ; l'app reste en marche, aucun événement. La vérification faite avant le prochain montage du moteur traite le refus. |
-| Échec de démarrage du moteur (`-SimulateEngineFailure YES`) | MACHINE | État « Erreur » + Réessayer, moteur non démarré, donc **original jamais coupé** ; une tentative, plus un seul nouvel essai automatique 3 s après (depuis 1.0.1), sans boucle. Nouvel essai automatique dès que la configuration change (fréquence, canaux, sortie). Revérifié après la revue (journaux : une seule tentative). |
+| Échec de démarrage du moteur (`-SimulateEngineFailure YES`) | MACHINE | État « Erreur » + Réessayer, moteur non démarré, donc **original jamais coupé** ; une tentative, plus un seul nouvel essai automatique 3 s après (depuis 1.1.0), sans boucle. Nouvel essai automatique dès que la configuration change (fréquence, canaux, sortie). Revérifié après la revue (journaux : une seule tentative). |
 
 ## 6. Ressources — MACHINE (build Release)
 
@@ -104,7 +104,7 @@ Trois revues indépendantes (Claude, Codex, Grok) : rapports et synthèse dans
 |---|---|
 | Changement rapide d'utilisateur, Studio EQ ouvert dans les deux sessions | Journaux : moteur arrêté quand la session passe en arrière-plan, remonté au retour ; le son de l'autre session n'est ni coupé ni doublé. |
 | Cocher « Masquer l'icône sans Studio Display », débrancher puis rebrancher l'écran | L'icône disparaît au débranchement, revient au branchement ; ouvrir Studio EQ depuis le Finder la fait revenir entre-temps. |
-| Écouter une basse forte avec les graves à +6 dB (limiteur au travail) | Plus de grain ni de saturation dans les graves (correction du limiteur, 1.0.1). |
+| Écouter une basse forte avec les graves à +6 dB (limiteur au travail) | Plus de grain ni de saturation dans les graves (correction du limiteur, 1.1.0). |
 | Débrancher / rebrancher le câble du Studio Display en cours de lecture | Vérifier « Aucun Studio Display connecté » puis « Actif » au retour, sans clic. Journaux : `/usr/bin/log show --last 5m --info --predicate 'subsystem == "com.jcbaptiste.StudioEQ"'` (chemin complet : sous zsh, `log` seul est une commande intégrée). |
 | Basculer vers des AirPods et revenir | État « Inactif : la sortie son est … », son des AirPods non traité. |
 | Mise en veille puis réveil avec l'écran sélectionné | Le moteur est arrêté à la veille et remonté au réveil ; le son doit reprendre égalisé. |
@@ -116,7 +116,7 @@ Trois revues indépendantes (Claude, Codex, Grok) : rapports et synthèse dans
 ## 9. Validation après la revue finale (22 novembre 2026)
 
 Revue finale de la version 1.0.0 publiée : [revues/finale/](revues/finale/SYNTHESE.md).
-Corrections de la version 1.0.1 :
+Corrections de la version 1.1.0 (préparée sous le numéro 1.0.1) :
 
 | Vérification | Méthode | Résultat |
 |---|---|---|
