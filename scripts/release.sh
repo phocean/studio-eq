@@ -4,15 +4,15 @@
 #
 # Builds the distributable Studio EQ: Release build signed with Developer ID (Hardened Runtime,
 # secure timestamp, no debugger entitlement), checked, packaged as a DMG, notarized and stapled.
-# Run it through make (`make release`, or `make dmg` for a trial without notarization), on a Mac
-# or in .github/workflows/release.yml.
+# Run it through make on the Mac that holds the Developer ID key: `make publish` (also tags and
+# uploads), `make release` (DMG only) or `make dmg` (trial without notarization).
 #
 # Environment:
 #   VERSION            version shown to users, e.g. 1.2.0 (required)
 #   BUILD_NUMBER       CFBundleVersion (default 1)
 #   TEAM_ID            Apple developer team ID (required)
 #   SIGN_IDENTITY      default "Developer ID Application"
-#   KEYCHAIN           keychain holding the identity (CI); default: the login search list
+#   KEYCHAIN           keychain holding the identity; default: the login search list
 #   Notarization, one of:
 #     NOTARY_PROFILE                            keychain profile (xcrun notarytool store-credentials)
 #     NOTARY_KEY_PATH + NOTARY_KEY_ID + NOTARY_ISSUER   App Store Connect API key (.p8)

@@ -21,7 +21,7 @@ sandbox actif, Hardened Runtime, **aucune dépendance externe**. ≈ 750 lignes 
 | `StudioEQ/Resources` | `*.xcstrings` | Chaînes : anglais (source) + français. |
 | `StudioEQTests` | | Tests unitaires DSP, temps réel, reconnaissance du Studio Display. |
 | racine | `Makefile` | Point d'entrée unique : génération du projet, build, tests, installation, validation, DMG, publication (`make help`). |
-| `scripts` | `release.sh`, `scenario.sh`, `audioctl.swift` | Publication signée et notarisée (appelée par `make release` / `make dmg`) ; scénarios de bascule automatisés ; pilote de test (sortie par défaut, fréquence, faux périphérique, son de test). |
+| `scripts` | `release.sh`, `scenario.sh`, `audioctl.swift` | Publication signée et notarisée (appelée par `make publish`, `make release` et `make dmg`) ; scénarios de bascule automatisés ; pilote de test (sortie par défaut, fréquence, faux périphérique, son de test). |
 
 Séparation demandée : **détection** (`DeviceMonitor`, `OutputDevice`) / **traitement**
 (`TapEngine`, `CaptureCheck`, `DSP/`) / **interface et préférences** (`App/`).

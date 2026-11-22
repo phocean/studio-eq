@@ -17,13 +17,18 @@ INSTALLED  := /Applications/StudioEQ.app
 AUDIOCTL   := build/audioctl
 
 # Release parameters. VERSION defaults to MARKETING_VERSION in project.yml, TEAM_ID to the one
-# in Config/Local.xcconfig; both can be given on the command line (make release VERSION=1.2.0).
-VERSION      ?= $(shell sed -n 's/^ *MARKETING_VERSION: *"\(.*\)"/\1/p' project.yml)
-BUILD_NUMBER ?= 1
-TEAM_ID      ?= $(shell sed -n 's/^DEVELOPMENT_TEAM *= *//p' Config/Local.xcconfig 2>/dev/null)
-DEVICE       ?=
+# in Config/Local.xcconfig, BUILD_NUMBER to the commit count (always increasing); all can be given
+# on the command line (make publish VERSION=1.2.0). NOTARY_PROFILE names the notarization
+# credentials stored in the login keychain by `xcrun notarytool store-credentials` (docs/RELEASE.md).
+VERSION        ?= $(shell sed -n 's/^ *MARKETING_VERSION: *"\(.*\)"/\1/p' project.yml)
+BUILD_NUMBER   ?= $(shell git rev-list --count HEAD 2>/dev/null || echo 1)
+TEAM_ID        ?= $(shell sed -n 's/^DEVELOPMENT_TEAM *= *//p' Config/Local.xcconfig 2>/dev/null)
+NOTARY_PROFILE ?= studio-eq
+DEVICE         ?=
+TAG            := v$(VERSION)
+DMG            := build/release/StudioEQ-$(VERSION).dmg
 
-.PHONY: help project build test install validation selftest scenario dmg release clean
+.PHONY: help project build test install validation selftest scenario dmg release publish clean
 
 help: ## List the targets
 	@awk -F ':.*## ' '/^[a-z-]+:.*## / { printf "  make %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -83,8 +88,24 @@ scenario: validation $(AUDIOCTL) ## Automated output-switching scenarios (moves 
 dmg: ## Signed Developer ID DMG, checked but NOT notarized (local trial)
 	@VERSION="$(VERSION)" BUILD_NUMBER="$(BUILD_NUMBER)" TEAM_ID="$(TEAM_ID)" SKIP_NOTARIZATION=1 zsh scripts/release.sh
 
-release: ## Signed, checked, notarized and stapled DMG (VERSION=x.y.z; credentials: docs/RELEASE.md)
-	@VERSION="$(VERSION)" BUILD_NUMBER="$(BUILD_NUMBER)" TEAM_ID="$(TEAM_ID)" zsh scripts/release.sh
+release: ## Signed, checked, notarized and stapled DMG, not published (credentials: docs/RELEASE.md)
+	@VERSION="$(VERSION)" BUILD_NUMBER="$(BUILD_NUMBER)" TEAM_ID="$(TEAM_ID)" \
+	  NOTARY_PROFILE="$(NOTARY_PROFILE)" zsh scripts/release.sh
+
+# The DMG is built on this Mac: the Developer ID private key never leaves its keychain. The source
+# must be committed and pushed first, so the published binary matches the published source (GPL).
+# The tag is pushed only once the DMG is notarized: a failed run leaves nothing on GitHub.
+publish: ## Test, release, then tag vX.Y.Z and upload the DMG as a GitHub release
+	@test -z "$$(git status --porcelain)" || { echo "publish: commit your changes first" >&2; exit 1; }
+	@git fetch --quiet origin && test "$$(git rev-parse HEAD)" = "$$(git rev-parse @{u})" \
+	  || { echo "publish: push the branch first, the release must match the published source" >&2; exit 1; }
+	@! git ls-remote --exit-code --tags origin "refs/tags/$(TAG)" >/dev/null \
+	  || { echo "publish: $(TAG) already exists on GitHub (bump MARKETING_VERSION in project.yml)" >&2; exit 1; }
+	@$(MAKE) --no-print-directory test
+	@$(MAKE) --no-print-directory release
+	@git tag -a $(TAG) -m "Studio EQ $(VERSION)" && git push --quiet origin $(TAG)
+	@gh release create $(TAG) $(DMG) $(DMG).sha256 --verify-tag --title "Studio EQ $(VERSION)" --generate-notes
+	@echo "Published $$(gh release view $(TAG) --json url -q .url)"
 
 clean: ## Remove build products (build/, dist/, generated project)
 	@rm -rf build dist $(PROJECT)

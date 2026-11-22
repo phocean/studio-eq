@@ -1,44 +1,58 @@
 # Publier une version
 
-Une version = une étiquette `vX.Y.Z` poussée sur GitHub. Le workflow
-[`release.yml`](../.github/workflows/release.yml) lance alors les tests, construit l'app
-signée **Developer ID**, la vérifie, l'emballe dans un DMG signé, la fait **notariser** par
-Apple, agrafe le ticket, contrôle le DMG avec Gatekeeper et publie la release GitHub
-(DMG + somme SHA-256). Il appelle `make release`, comme on le ferait sur un Mac ; la logique est
-dans [`scripts/release.sh`](../scripts/release.sh).
+Le DMG est construit, signé et notarisé **sur le Mac du titulaire du compte développeur**, puis
+déposé dans une release GitHub. La clé privée Developer ID ne quitte jamais son trousseau : rien
+n'est confié à GitHub, qui ne reçoit que le DMG final et sa somme SHA-256.
 
 ```bash
-git tag v1.0.0 && git push origin v1.0.0
+make publish
 ```
 
-## Réglages à faire une fois (par le titulaire du compte développeur)
+Dans l'ordre, `make publish` :
 
-Ils sont propres au compte Apple et restent hors du dépôt. Dans GitHub : *Settings › Secrets
-and variables › Actions* (ou dans l'environnement `release`, qui permet d'exiger une
-approbation avant chaque publication).
+1. refuse de continuer si des modifications ne sont pas validées (commit) ou pas poussées : le
+   binaire publié doit correspondre exactement au code source publié (GPL) ;
+2. refuse si l'étiquette `vX.Y.Z` existe déjà sur GitHub ;
+3. lance les tests unitaires ;
+4. lance `make release` : build Release signé Developer ID, vérifications bloquantes (ci-dessous),
+   DMG signé, notarisation par Apple, agrafage du ticket, contrôle Gatekeeper ;
+5. seulement alors, crée et pousse l'étiquette `vX.Y.Z` ;
+6. crée la release GitHub avec le DMG et son `.sha256`, et affiche son adresse.
 
-| Nom | Type | Contenu |
-|---|---|---|
-| `APPLE_TEAM_ID` | variable | Identifiant d'équipe (10 caractères ; il figure de toute façon dans la signature). |
-| `DEVELOPER_ID_P12_BASE64` | secret | Certificat « Developer ID Application » **avec sa clé privée**, exporté en `.p12` depuis Trousseaux d'accès, puis encodé : `base64 -i DeveloperID.p12 \| pbcopy`. |
-| `DEVELOPER_ID_P12_PASSWORD` | secret | Mot de passe choisi à l'export du `.p12`. |
-| `NOTARY_KEY_P8_BASE64` | secret | Clé d'API App Store Connect (`AuthKey_XXXX.p8`, rôle *Developer*), encodée : `base64 -i AuthKey_XXXX.p8 \| pbcopy`. Créée dans App Store Connect › Utilisateurs et accès › Intégrations › Clés d'équipe. |
-| `NOTARY_KEY_ID` | secret | Identifiant de cette clé. |
-| `NOTARY_ISSUER_ID` | secret | « Issuer ID » affiché sur la même page. |
+Un échec aux étapes 1 à 4 ne laisse aucune trace sur GitHub.
 
-Avec `gh`, depuis le dossier du dépôt (chaque commande demande la valeur, qui ne passe pas par
-l'historique du shell) :
+## Nouvelle version
 
-```bash
-gh secret set DEVELOPER_ID_P12_BASE64 < <(base64 -i DeveloperID.p12)
-gh secret set DEVELOPER_ID_P12_PASSWORD
-gh secret set NOTARY_KEY_P8_BASE64 < <(base64 -i AuthKey_XXXX.p8)
-gh secret set NOTARY_KEY_ID
-gh secret set NOTARY_ISSUER_ID
-```
+1. Changer `MARKETING_VERSION` dans `project.yml` (par exemple `"1.1.0"`).
+2. Valider (commit) et pousser.
+3. `make publish`.
 
-Le certificat est importé dans un trousseau temporaire du runner, supprimé à la fin, même en cas
-d'échec.
+Le numéro de build (`CFBundleVersion`) est le nombre de commits : il augmente toujours.
+
+## Réglage à faire une fois : les identifiants de notarisation
+
+La notarisation envoie le DMG à Apple, qui doit savoir qui l'envoie. `notarytool` enregistre ces
+identifiants dans le trousseau de session, sous un nom (« profil ») que `make` utilise ensuite :
+`studio-eq` par défaut.
+
+1. Créer un **mot de passe pour app** : [account.apple.com](https://account.apple.com) ›
+   *Connexion et sécurité* › *Mots de passe pour app* › *+*, nom « notarytool ». Apple l'affiche
+   une seule fois ; il sert uniquement à cet usage et se révoque au même endroit.
+2. L'enregistrer dans le trousseau. La commande demande ensuite ce mot de passe, sans l'afficher :
+
+   ```bash
+   xcrun notarytool store-credentials studio-eq --apple-id <votre Apple ID> --team-id <Team ID>
+   ```
+
+   Le Team ID figure dans `Config/Local.xcconfig` (`DEVELOPMENT_TEAM`).
+3. Vérifier (affiche l'historique des envois, vide la première fois) :
+
+   ```bash
+   xcrun notarytool history --keychain-profile studio-eq
+   ```
+
+Une clé d'API App Store Connect (`.p8`) fonctionne aussi : `scripts/release.sh` accepte
+`NOTARY_KEY_PATH`, `NOTARY_KEY_ID` et `NOTARY_ISSUER` à la place du profil.
 
 ## Vérifications bloquantes de `make release`
 
@@ -46,21 +60,28 @@ d'échec.
   **Hardened Runtime** ;
 - un seul droit : le sandbox (pas de réseau, pas de micro, **pas de `get-task-allow`**) ;
 - aucun outil de validation dans le binaire (`--selftest`, `-TargetDeviceUID`) ;
-- numéro de version identique à l'étiquette ;
+- numéro de version identique à celui demandé ;
 - notarisation « Accepted » (sinon le journal d'Apple est affiché), ticket agrafé, DMG accepté
   par Gatekeeper (`spctl`).
 
-## Essai local
-
-`VERSION` vaut par défaut celle de `project.yml`, `TEAM_ID` celle de `Config/Local.xcconfig`.
+## Essais sans publier
 
 ```bash
 make dmg
 ```
 
-Avec notarisation, après `xcrun notarytool store-credentials studio-eq` (identifiants saisis
-par vous) :
+DMG signé et vérifié, **non notarisé** (aucun identifiant requis) ; Gatekeeper le refuserait
+sur un autre Mac.
 
 ```bash
-make release VERSION=1.0.0 NOTARY_PROFILE=studio-eq
+make release
 ```
+
+DMG notarisé et agrafé dans `build/release/`, sans étiquette ni release GitHub.
+
+## Pourquoi pas GitHub Actions
+
+Un workflow pourrait construire le DMG sur une machine de GitHub, mais il faudrait y déposer, en
+secrets, le certificat Developer ID **avec sa clé privée** et une clé de notarisation. Choix
+retenu : la clé ne quitte pas le Mac du développeur. GitHub Actions ne sert qu'à l'intégration
+continue (`ci.yml` : build et tests à chaque poussée, sans aucun secret).
